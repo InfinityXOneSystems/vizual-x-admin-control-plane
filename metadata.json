@@ -1,0 +1,5 @@
+{
+  "name": "Glass Code Chat",
+  "description": "A developer-focused AI assistant with a glassmorphic sidebar and a Monaco-style code viewer, powered by Gemini 3 Flash.",
+  "requestFramePermissions": []
+}
