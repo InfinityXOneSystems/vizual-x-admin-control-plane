@@ -5,6 +5,7 @@ import { WorkspaceMirror } from './components/WorkspaceMirror';
 import { IntelligenceHub } from './components/IntelligenceHub';
 import { SystemsControl } from './components/SystemsControl';
 import { RightToolbar } from './components/RightToolbar';
+import { VaultXPage } from './components/VaultXPage';
 import { Agent, Message, TaskResult, Recommendation, SystemUpdate, CreatorTool, UIConfiguration } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 
@@ -120,7 +121,20 @@ const App: React.FC = () => {
         };
         setResults(prev => [newResult, ...prev]);
       }
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+    } catch (e: any) { 
+      console.error("Gemini API Error:", e);
+      const errorMsg: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `* <span class="neon-red-text">SYSTEM ERROR:</span> The Sovereign Cluster is currently experiencing high demand (503). 
+        * <span class="neon-yellow-text">STATUS:</span> Autonomous retry logic failed to establish a secure link.
+        * <span class="neon-green-text">ACTION:</span> Please standby and re-deploy your directive in a few moments.`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally { 
+      setIsLoading(false); 
+    }
   }, [messages, agents, selectedAgentIds]);
 
   return (
@@ -153,6 +167,7 @@ const App: React.FC = () => {
               {[
                 { id: 'intelligence', label: 'Dashboard' },
                 { id: 'workspace', label: 'Workspace' },
+                { id: 'vault', label: 'Vault X' },
                 { id: 'systems', label: 'Control' }
               ].map(nav => (
                 <button 
@@ -194,6 +209,7 @@ const App: React.FC = () => {
             {activeTool === 'intelligence' && <IntelligenceHub recommendations={recommendations} results={results} />}
             {activeTool === 'builder' && <AgentBuilder agents={agents} setAgents={setAgents} />}
             {activeTool === 'workspace' && <WorkspaceMirror />}
+            {activeTool === 'vault' && <VaultXPage />}
             {activeTool === 'systems' && <SystemsControl updates={systemUpdates} uiConfig={uiConfig} setUiConfig={setUiConfig} />}
           </div>
 

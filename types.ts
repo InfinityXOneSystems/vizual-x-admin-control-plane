@@ -78,7 +78,7 @@ export interface UIConfiguration {
   neonIntensity: number;
 }
 
-export type CreatorTool = 'editor' | 'builder' | 'workspace' | 'intelligence' | 'systems' | 'ui' | 'video' | 'image' | 'music' | 'business' | 'browser';
+export type CreatorTool = 'editor' | 'builder' | 'workspace' | 'intelligence' | 'systems' | 'ui' | 'video' | 'image' | 'music' | 'business' | 'browser' | 'vault';
 
 export interface FileData {
   id: string;
