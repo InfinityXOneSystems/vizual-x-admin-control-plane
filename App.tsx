@@ -4,6 +4,7 @@ import { AgentBuilder } from './components/AgentBuilder';
 import { WorkspaceMirror } from './components/WorkspaceMirror';
 import { IntelligenceHub } from './components/IntelligenceHub';
 import { SystemsControl } from './components/SystemsControl';
+import { RightToolbar } from './components/RightToolbar';
 import { Agent, Message, TaskResult, Recommendation, SystemUpdate, CreatorTool, UIConfiguration } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 
@@ -22,6 +23,8 @@ const App: React.FC = () => {
   const [agents, setAgents] = useState<Agent[]>(SPECIALIST_AGENTS);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>(['exec']);
   const [results, setResults] = useState<TaskResult[]>([]);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  
   const [uiConfig, setUiConfig] = useState<UIConfiguration>({
     primaryColor: '#0066ff',
     accentColor: '#39FF14',
@@ -39,16 +42,20 @@ const App: React.FC = () => {
     { id: 'roi', label: 'ROI-Optimize', status: 'Scaling', color: 'neon-green-text' }
   ]);
 
-  const [systemUpdates, setSystemUpdates] = useState<SystemUpdate[]>([
+  const [systemUpdates] = useState<SystemUpdate[]>([
     { id: '1', timestamp: '10:42 AM', title: 'Daily Auto-Fix Executed', content: 'Redundant node connections purged. Latency reduced by 12ms.', type: 'update' },
     { id: '2', timestamp: '11:15 AM', title: 'Persistent Auto-Heal', content: 'Recovered lost socket in Shadow Browser cluster. No data loss.', type: 'performance' },
     { id: '3', timestamp: '12:05 PM', title: 'Cost Optimization Summary', content: 'GCP Billing optimized. Current burn rate reduced by 14% via spot instances.', type: 'billing' }
   ]);
 
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([
+  const [recommendations] = useState<Recommendation[]>([
     { id: '1', source: 'Market Prophet', title: 'AI Infrastructure Alpha', prediction: 'Breakout detected in LPU cluster hardware manufacturing.', confidence: 92, action: 'Execute Analysis', priority: 10 },
     { id: '2', source: 'Shadow Ghost', title: 'Deep Tech Leak: Vix-Core', prediction: 'New sovereign logic benchmarks leaked from private labs.', confidence: 85, action: 'Ingest Data', priority: 8 }
   ]);
+
+  useEffect(() => {
+    document.body.className = isDarkMode ? 'dark' : 'light';
+  }, [isDarkMode]);
 
   const handleSendMessage = useCallback(async (text: string) => {
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() };
@@ -71,11 +78,6 @@ const App: React.FC = () => {
         - Style important actions in <span class="neon-green-text">Text</span>. 
         - Style risks in <span class="neon-yellow-text">Text</span>. 
         - Style critical failures/stops in <span class="neon-red-text">Text</span>.
-        
-        Example structure:
-        * <span class="neon-green-text">CRITICAL:</span> Initializing Auto-Heal on node cluster 7.
-        * <span class="neon-yellow-text">WARNING:</span> Detected ROI slippage in crypto sector.
-        * <span class="neon-green-text">ACTION:</span> Optimizing billing burn rate via preemptive instance shifts.
 
         UI UPDATE TRIGGER: [UI_UPDATE: fontSize=16, primaryColor=#0066ff, accentColor=#39FF14]`;
 
@@ -96,18 +98,6 @@ const App: React.FC = () => {
       for await (const chunk of stream) {
         assistantContent += chunk.text || "";
         setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
-        
-        if (assistantContent.includes('[UI_UPDATE:')) {
-            const match = assistantContent.match(/\[UI_UPDATE:\s*(.*?)\]/);
-            if (match && match[1]) {
-                const params = match[1].split(',').reduce((acc: any, curr) => {
-                    const [k, v] = curr.trim().split('=');
-                    acc[k.trim()] = (k.trim() === 'primaryColor' || k.trim() === 'accentColor') ? v.trim() : parseFloat(v.trim());
-                    return acc;
-                }, {});
-                setUiConfig(prev => ({ ...prev, ...params }));
-            }
-        }
       }
 
       if (text.toLowerCase().includes('status') || text.toLowerCase().includes('run')) {
@@ -134,7 +124,9 @@ const App: React.FC = () => {
   }, [messages, agents, selectedAgentIds]);
 
   return (
-    <div className="flex h-screen w-full bg-black text-white font-inter overflow-hidden transition-all duration-500" style={{ fontSize: `${uiConfig.fontSizeBase}px` }}>
+    <div className={`flex flex-col lg:flex-row h-screen w-full bg-black text-white font-inter overflow-hidden transition-all duration-500 ${!isDarkMode ? 'light' : ''}`} style={{ fontSize: `${uiConfig.fontSizeBase}px` }}>
+      
+      {/* Left Chat Sidebar (Mobile hidden by default or toggleable) */}
       <ChatSidebar 
         messages={messages} 
         onSendMessage={handleSendMessage} 
@@ -144,67 +136,73 @@ const App: React.FC = () => {
         onAgentToggle={(id) => setSelectedAgentIds(prev => prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id])}
         onSelectAllAgents={() => setSelectedAgentIds(agents.map(a => a.id))}
         recommendations={recommendations}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 border-l border-white/5 relative">
-        {/* Autonomous Systems Alignment Bar */}
-        <div className="h-10 bg-zinc-950 border-b border-white/10 flex items-center px-6 gap-6 overflow-hidden z-40">
-           <div className="flex items-center gap-2 pr-6 border-r border-white/5 h-full">
-              <span className="text-[9px] font-black uppercase tracking-widest neon-green-text italic">Autonomous Persistent alignment</span>
-           </div>
-           <div className="flex-1 flex items-center gap-8 overflow-x-auto no-scrollbar">
-              {autoSystems.map(sys => (
-                <div key={sys.id} className="flex items-center gap-2 whitespace-nowrap group cursor-help">
-                   <div className={`w-1.5 h-1.5 rounded-full ${sys.status === 'Active' || sys.status === 'Persistent' || sys.status === 'Optimal' || sys.status === 'Scaling' ? 'neon-green-gradient animate-pulse shadow-glow-green' : 'bg-white/10'}`}></div>
-                   <span className="text-[8px] font-black uppercase tracking-widest opacity-30 group-hover:opacity-100 transition-opacity italic">{sys.label}:</span>
-                   <span className={`text-[9px] font-black italic uppercase ${sys.color}`}>{sys.status}</span>
-                </div>
-              ))}
-           </div>
-           <div className="hidden xl:block">
-              <div className="animate-ticker text-[10px] font-black uppercase tracking-[0.3em] italic opacity-20 hover:opacity-100 transition-opacity">
-                 {systemUpdates.map(u => `[${u.timestamp}] ${u.title}: ${u.content} • `).join('')}
-              </div>
-           </div>
-        </div>
-
-        <header className="h-20 border-b border-white/10 flex items-center justify-between px-10 bg-black/80 backdrop-blur-3xl z-30">
-          <div className="flex items-center gap-10">
-            <h2 className="text-2xl font-black uppercase tracking-tighter italic flex items-center gap-3">
-               <span className="w-1.5 h-6 electric-gradient rounded-full"></span>
-               VIZUAL X / {activeTool.toUpperCase()}
+      <div className="flex-1 flex flex-col min-w-0 border-l border-white/5 relative bg-black dark:bg-black light:bg-slate-50">
+        
+        {/* Top Navigation Bar */}
+        <header className="h-16 lg:h-20 border-b border-white/10 flex items-center justify-between px-4 lg:px-10 bg-black/80 backdrop-blur-3xl z-40 sticky top-0">
+          <div className="flex items-center gap-4 lg:gap-10">
+            <h2 className="text-xl lg:text-2xl font-black uppercase tracking-tighter italic flex items-center gap-3">
+               <span className="w-1 lg:w-1.5 h-6 electric-gradient rounded-full"></span>
+               <span className="hidden sm:inline">VIZUAL X</span>
             </h2>
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-1 sm:gap-2">
               {[
-                { id: 'intelligence', label: 'ROI Matrix' },
-                { id: 'builder', label: 'Agent Architect' },
-                { id: 'workspace', label: 'Workspace Hub' },
-                { id: 'systems', label: 'Control Node' }
+                { id: 'intelligence', label: 'Dashboard' },
+                { id: 'workspace', label: 'Workspace' },
+                { id: 'systems', label: 'Control' }
               ].map(nav => (
                 <button 
                   key={nav.id} 
                   onClick={() => setActiveTool(nav.id as any)}
-                  className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTool === nav.id ? 'neon-bg-green neon-green-text shadow-glow-green' : 'opacity-20 hover:opacity-100 italic'}`}
+                  className={`px-3 lg:px-6 py-1.5 lg:py-2 rounded-full text-[9px] lg:text-[10px] font-black uppercase tracking-widest transition-all ${activeTool === nav.id ? 'neon-bg-green neon-green-text shadow-glow-green' : 'opacity-20 hover:opacity-100 italic'}`}
                 >
                   {nav.label}
                 </button>
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col items-end">
-              <span className="text-[9px] font-black neon-green-text uppercase tracking-widest animate-pulse leading-none">Sovereign Orchestration</span>
+          
+          <div className="flex items-center gap-4 lg:gap-6">
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-[9px] font-black neon-green-text uppercase tracking-widest animate-pulse leading-none">Sovereign Node</span>
               <span className="text-[8px] opacity-20 font-bold uppercase tracking-widest italic mt-1 leading-none">Auto-Fix Persistent</span>
             </div>
             <div className="w-3 h-3 rounded-full electric-gradient shadow-glow-blue"></div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-hidden flex bg-black">
-          {activeTool === 'intelligence' && <IntelligenceHub recommendations={recommendations} results={results} />}
-          {activeTool === 'builder' && <AgentBuilder agents={agents} setAgents={setAgents} />}
-          {activeTool === 'workspace' && <WorkspaceMirror />}
-          {activeTool === 'systems' && <SystemsControl updates={systemUpdates} uiConfig={uiConfig} setUiConfig={setUiConfig} />}
+        {/* Autonomous Systems Bar */}
+        <div className="h-8 lg:h-10 bg-zinc-950 border-b border-white/10 flex items-center px-4 lg:px-6 gap-6 overflow-hidden z-30">
+           <div className="flex-1 flex items-center gap-6 lg:gap-8 overflow-x-auto no-scrollbar">
+              {autoSystems.map(sys => (
+                <div key={sys.id} className="flex items-center gap-2 whitespace-nowrap group">
+                   <div className={`w-1.5 h-1.5 rounded-full ${sys.status === 'Active' || sys.status === 'Persistent' || sys.status === 'Optimal' || sys.status === 'Scaling' ? 'neon-green-gradient animate-pulse shadow-glow-green' : 'bg-white/10'}`}></div>
+                   <span className="text-[8px] font-black uppercase tracking-widest opacity-30 italic">{sys.label}:</span>
+                   <span className={`text-[9px] font-black italic uppercase ${sys.color}`}>{sys.status}</span>
+                </div>
+              ))}
+           </div>
+        </div>
+
+        {/* Main Content Area */}
+        <main className="flex-1 flex overflow-hidden">
+          <div className="flex-1 overflow-hidden relative">
+            {activeTool === 'intelligence' && <IntelligenceHub recommendations={recommendations} results={results} />}
+            {activeTool === 'builder' && <AgentBuilder agents={agents} setAgents={setAgents} />}
+            {activeTool === 'workspace' && <WorkspaceMirror />}
+            {activeTool === 'systems' && <SystemsControl updates={systemUpdates} uiConfig={uiConfig} setUiConfig={setUiConfig} />}
+          </div>
+
+          {/* Right Toolbar */}
+          <RightToolbar 
+            activeTool={activeTool} 
+            setActiveTool={setActiveTool} 
+            onIdeaGenerated={(idea) => handleSendMessage(`Generate a creative idea for: ${idea}`)}
+          />
         </main>
       </div>
     </div>
