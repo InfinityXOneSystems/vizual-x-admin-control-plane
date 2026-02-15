@@ -4,17 +4,18 @@ import { ChatSidebar } from './components/ChatSidebar';
 import { MonacoEditor } from './components/MonacoEditor';
 import { 
   Message, FileData, AppView, Theme, 
-  AppSettings, Connector, ProjectAction, AIRecommendation, AdminMetrics,
-  CloudRunService, DockerContainer, MediaItem
+  AppSettings, ProjectAction, AIRecommendation, AdminMetrics,
+  RefactorSuggestion, EditingMode, PipelineStep
 } from './types';
-import { sendMessageToGemini, generateImage, generateVideo, textToSpeech } from './services/geminiService';
+import { sendMessageToGemini, analyzeCodeForRefactoring } from './services/geminiService';
 
 declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
   interface Window {
-    aistudio: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
+    aistudio?: AIStudio;
   }
 }
 
@@ -25,76 +26,78 @@ const App: React.FC = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [actionHistory, setActionHistory] = useState<ProjectAction[]>([]);
   const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null);
-
-  const [cloudRunServices, setCloudRunServices] = useState<CloudRunService[]>([
-    { id: 'fe-svc', name: 'frontend-service', status: 'READY', traffic: 100, location: 'us-central1', lastDeployed: new Date(), type: 'core' },
-    { id: 'be-svc', name: 'backend-backend-service', status: 'READY', traffic: 0, location: 'us-central1', lastDeployed: new Date(), type: 'core' },
-    { id: 'async-scraper', name: 'async-scraper-service', status: 'READY', traffic: 0, location: 'us-central1', lastDeployed: new Date(), type: 'scraper' },
-    { id: 'builder-svc', name: 'builder-service', status: 'READY', traffic: 0, location: 'us-central1', lastDeployed: new Date(), type: 'builder' },
-    { id: 'media-svc', name: 'media-generation-service', status: 'READY', traffic: 0, location: 'us-central1', lastDeployed: new Date(), type: 'media' },
-    { id: 'trading-svc', name: 'trading-simulation-service', status: 'READY', traffic: 0, location: 'us-central1', lastDeployed: new Date(), type: 'trading' },
-  ]);
-
-  const [dockerMirror, setDockerMirror] = useState<DockerContainer[]>([
-    { id: 'c1', name: 'infinity-proxy', image: 'nginx:alpine', status: 'running', ports: '80:80' },
-    { id: 'c2', name: 'scraper-worker-01', image: 'infinity/scraper:latest', status: 'running', ports: 'None' },
-    { id: 'c3', name: 'mcp-tunnel', image: 'cloudflare/cloudflared', status: 'running', ports: 'None' },
-  ]);
-
+  const [livePreviewUrl, setLivePreviewUrl] = useState<string | null>(null);
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([]);
+  
   const [settings, setSettings] = useState<AppSettings>(() => {
-    const saved = localStorage.getItem('glass-coder-v4-settings');
+    const saved = localStorage.getItem('vizual-x-sovereign-settings');
     if (saved) return JSON.parse(saved);
     return {
       theme: 'dark',
-      userName: 'LeadEngineer',
+      userName: 'Architect-One',
       autoLint: true,
       sandboxMode: true,
       advancedSecurity: true,
-      aiModel: 'gemini-3-flash-preview',
+      aiModel: 'gemini-3-pro-preview',
       temperature: 0.7,
-      maxTokens: 2048,
+      topP: 0.95,
+      topK: 40,
+      maxTokens: 8192,
+      thinkingBudget: 0,
       googleStudioFeatures: true,
       githubSparksEnabled: true,
+      groundingEnabled: false,
+      editingMode: 'full-code',
+      vertexEndpoint: 'us-central1',
+      autonomousAgentActive: false,
+      parallelInstanceCount: 4,
+      hybridCloudSync: true,
+      safety: {
+        harassment: 'BLOCK_LOW_AND_ABOVE',
+        hateSpeech: 'BLOCK_LOW_AND_ABOVE',
+        sexuallyExplicit: 'BLOCK_LOW_AND_ABOVE',
+        dangerousContent: 'BLOCK_LOW_AND_ABOVE'
+      },
       connectors: [
-        { id: 'github', name: 'GitHub Remote', type: 'github', status: 'connected' },
-        { id: 'google', name: 'Google Cloud Run', type: 'google', status: 'connected' },
-        { id: 'vscode', name: 'VS Code Tunnel', type: 'service', status: 'connected' },
-        { id: 'docker', name: 'Docker Desktop', type: 'service', status: 'connected' },
+        { id: 'github', name: 'GitHub Enterprise', type: 'github', status: 'connected' },
+        { id: 'google', name: 'GCP Vertex Console', type: 'google', status: 'connected' },
+        { id: 'docker', name: 'Docker Engine', type: 'service', status: 'connected' },
       ]
     };
   });
 
   const [metrics, setMetrics] = useState<AdminMetrics>({
-    cpuUsage: 14, memoryUsage: 512, apiLatency: 88, activeDeployments: 6, globalTraffic: 2400, serverlessExecutionCount: 14202
+    cpuUsage: 14, memoryUsage: 1024, apiLatency: 38, activeDeployments: 24, globalTraffic: 15400, serverlessExecutionCount: 890201
   });
 
   const [files, setFiles] = useState<FileData[]>(() => {
     const saved = localStorage.getItem('glass-code-files');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : [
+      { id: 'core', name: 'AutonomousCore.tsx', language: 'tsx', content: 'export default function Agent() {\n  return (\n    <div className="flex flex-col gap-4 p-8 bg-zinc-950 border border-white/5 rounded-3xl">\n      <h1 className="text-3xl font-black italic text-blue-500">MANUS AGENT ACTIVE</h1>\n      <p className="text-xs opacity-40 uppercase tracking-[0.3em]">Recursive Pipeline Engine</p>\n    </div>\n  );\n}' }
+    ];
   });
 
-  const [activeFileId, setActiveFileId] = useState<string | null>(() => {
-    return localStorage.getItem('glass-code-active-id');
-  });
-
+  const [activeFileId, setActiveFileId] = useState<string | null>('core');
   const activeFile = files.find(f => f.id === activeFileId) || null;
 
   useEffect(() => {
-    localStorage.setItem('glass-coder-v4-settings', JSON.stringify(settings));
+    localStorage.setItem('vizual-x-sovereign-settings', JSON.stringify(settings));
     document.body.className = settings.theme;
   }, [settings]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        ...prev,
-        cpuUsage: Math.floor(Math.random() * 20) + 5,
-        apiLatency: Math.floor(Math.random() * 50) + 70,
-        serverlessExecutionCount: prev.serverlessExecutionCount + Math.floor(Math.random() * 5)
-      }));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (settings.autonomousAgentActive) {
+      const interval = setInterval(() => {
+        setMetrics(prev => ({
+          ...prev,
+          cpuUsage: Math.floor(Math.random() * 30) + 10,
+          apiLatency: Math.floor(Math.random() * 20) + 30,
+          serverlessExecutionCount: prev.serverlessExecutionCount + Math.floor(Math.random() * 10)
+        }));
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [settings.autonomousAgentActive]);
 
   const recordAction = useCallback((
     type: ProjectAction['type'], 
@@ -102,30 +105,42 @@ const App: React.FC = () => {
     filesToSave: FileData[],
     codeSnippet?: string
   ) => {
-    const status: ProjectAction['status'] = Math.random() > 0.9 ? 'warning' : 'perfect';
     const action: ProjectAction = {
       id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date(),
       description,
       type,
       filesSnapshot: JSON.parse(JSON.stringify(filesToSave)),
-      status,
+      status: 'perfect',
       isLocked: true,
       codeSnippet,
-      fixSuggestion: status === 'warning' ? "GITHUB LINT: CORRECTING AUTO-GENERATED TYPE DEFINITIONS FOR GOOGLE PROTOBUF COMPLIANCE." : undefined,
-      enhancementSuggestion: status === 'perfect' ? "AUTO-RECOMMEND: IMPLEMENTING EDGE-CACHING LOGIC VIA CLOUDFLARE WORKERS TUNNEL." : undefined
     };
-
     setActionHistory(prev => [action, ...prev]);
     return action.id;
   }, []);
 
-  // Guidelines: Mandatory API Key selection check for paid features like Veo and Gemini 3 Pro Image.
-  const ensureApiKeySelection = async () => {
-    if (window.aistudio && !(await window.aistudio.hasSelectedApiKey())) {
-      await window.aistudio.openSelectKey();
+  const triggerPipeline = useCallback(async () => {
+    setView('pipeline');
+    const steps: PipelineStep[] = [
+      { id: '1', label: 'Spawning Parallel Instances', status: 'active', timestamp: new Date(), logs: ['Allocating us-central1 nodes...', 'Spawning 4 Docker containers...'] },
+      { id: '2', label: 'Analyzing Workspace Graph', status: 'pending', timestamp: new Date(), logs: [] },
+      { id: '3', label: 'Recursive Refactoring', status: 'pending', timestamp: new Date(), logs: [] },
+      { id: '4', label: 'Cloud-Hybrid Persistence Sync', status: 'pending', timestamp: new Date(), logs: [] },
+    ];
+    setPipelineSteps(steps);
+
+    // Simulate Manus-style autonomous progression
+    for (let i = 0; i < steps.length; i++) {
+      await new Promise(r => setTimeout(r, 2000 + Math.random() * 1500));
+      setPipelineSteps(prev => prev.map((s, idx) => {
+        if (idx === i) return { ...s, status: 'completed' as const, logs: [...s.logs, 'Step finalized successfully.'] };
+        if (idx === i + 1) return { ...s, status: 'active' as const, logs: ['Requesting Gemini Pro inference...', 'Injecting patterns...'] };
+        return s;
+      }));
     }
-  };
+    
+    setRecommendation({ id: 'r1', text: 'Pipeline Optimized. 4 new micro-service patterns identified.', priority: 'high' });
+  }, []);
 
   const handleSendMessage = useCallback(async (text: string) => {
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() };
@@ -133,275 +148,321 @@ const App: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 1. Check for specific commands (Image, Video, etc.)
-      if (text.toLowerCase().startsWith('/image')) {
-        await ensureApiKeySelection();
-        const prompt = text.replace('/image', '').trim();
-        const imageUrl = await generateImage(prompt);
-        if (imageUrl) {
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: `Generated image for: ${prompt}`,
-            timestamp: new Date(),
-            media: { type: 'image', url: imageUrl }
-          }]);
-        }
-      } else if (text.toLowerCase().startsWith('/video')) {
-        await ensureApiKeySelection();
-        const prompt = text.replace('/video', '').trim();
-        const videoUrl = await generateVideo(prompt);
-        if (videoUrl) {
-          setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: `Generated video for: ${prompt}`,
-            timestamp: new Date(),
-            media: { type: 'video', url: videoUrl }
-          }]);
-        }
-      } else {
-        // 2. Standard Chat with Thinking / Grounding support
-        const config: any = {
-          temperature: settings.temperature,
-          thinking: text.toLowerCase().includes('think') || text.length > 200,
-          googleSearch: text.toLowerCase().includes('search') || text.toLowerCase().includes('news')
-        };
+      const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] }));
+      const stream = await sendMessageToGemini(text, history, settings);
+      
+      let assistantContent = '';
+      const assistantId = (Date.now() + 1).toString();
+      setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
 
-        const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] }));
-        const stream = await sendMessageToGemini(text, history, config);
-        
-        let assistantContent = '';
-        let groundingSources: { title: string; url: string }[] = [];
-        const assistantId = (Date.now() + 1).toString();
-        setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', timestamp: new Date() }]);
-
-        for await (const chunk of stream) {
-          assistantContent += chunk.text || "";
-          
-          // Guidelines: Extract grounding chunks to display URLs when Google Search is used.
-          const metadata = chunk.candidates?.[0]?.groundingMetadata;
-          if (metadata?.groundingChunks) {
-            metadata.groundingChunks.forEach((c: any) => {
-              if (c.web) {
-                groundingSources.push({ title: c.web.title, url: c.web.uri });
-              }
-            });
-          }
-
-          setMessages(prev => prev.map(m => m.id === assistantId ? { 
-            ...m, 
-            content: assistantContent,
-            sources: groundingSources.length > 0 ? Array.from(new Set(groundingSources.map(s => JSON.stringify(s)))).map(s => JSON.parse(s)) : undefined
-          } : m));
-        }
-
-        // 3. Process Code Extractions
-        const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-        let match;
-        const extracted: FileData[] = [];
-        while ((match = codeBlockRegex.exec(assistantContent)) !== null) {
-          extracted.push({ id: Math.random().toString(36).substr(2, 9), name: `update-${Date.now() % 1000}.${match[1] || 'tsx'}`, language: match[1] || 'tsx', content: match[2].trim() });
-        }
-
-        if (extracted.length > 0) {
-          setFiles(prev => {
-            const next = [...prev, ...extracted];
-            const actionId = recordAction('code_injection', `AI Sandbox Injection: ${extracted.length} snippets`, next, extracted[0].content);
-            setMessages(prevMsg => prevMsg.map(m => m.id === assistantId ? { ...m, actionId } : m));
-            return next;
-          });
-        }
+      for await (const chunk of stream) {
+        assistantContent += chunk.text || "";
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
       }
-    } catch (e: any) {
+
+      // Natural language code ingestion
+      const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+      let match;
+      const extracted: FileData[] = [];
+      while ((match = codeBlockRegex.exec(assistantContent)) !== null) {
+        extracted.push({ 
+          id: Math.random().toString(36).substr(2, 9), 
+          name: `autonomous-${Date.now() % 1000}.${match[1] || 'tsx'}`, 
+          language: match[1] || 'tsx', 
+          content: match[2].trim() 
+        });
+      }
+
+      if (extracted.length > 0) {
+        setFiles(prev => {
+          const next = [...prev, ...extracted];
+          recordAction('autonomous_patch', `Autonomous Agent Update: ${extracted.length} nodes injected`, next, extracted[0].content);
+          return next;
+        });
+      }
+    } catch (e) {
       console.error(e);
-      // Guidelines: If the request fails with 'Requested entity was not found', prompt for key selection again.
-      if (e?.message?.includes("Requested entity was not found") && window.aistudio) {
-        await window.aistudio.openSelectKey();
-      }
     } finally {
       setIsLoading(false);
     }
-  }, [messages, settings.temperature, recordAction]);
+  }, [messages, settings, recordAction]);
 
   const renderViewContent = () => {
     const cardBase = "bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl transition-all hover:border-blue-500/30";
     
     switch (view) {
-      case 'admin':
+      case 'settings':
         return (
-          <div className="flex-1 flex flex-col p-12 overflow-auto space-y-12 custom-scrollbar">
+          <div className="flex-1 flex flex-col p-12 overflow-auto space-y-12 custom-scrollbar animate-in fade-in duration-500">
             <header className="flex justify-between items-end border-b border-white/10 pb-8">
               <div>
-                <h2 className="text-5xl font-black tracking-tighter">ADMIN CONTROL PLANE</h2>
-                <p className="text-[10px] opacity-40 font-mono-code uppercase tracking-[0.3em] mt-2">Infinity-X-One Flagship Infrastructure</p>
+                <h2 className="text-6xl font-black tracking-tighter uppercase bg-gradient-to-r from-blue-500 to-white bg-clip-text text-transparent italic">Vertex Studio</h2>
+                <p className="text-[11px] opacity-40 font-mono-code uppercase tracking-[0.5em] mt-3">Sovereign Flagship Configuration</p>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
+                 <button 
+                  onClick={() => setSettings(prev => ({...prev, theme: prev.theme === 'dark' ? 'light' : 'dark'}))}
+                  className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2"
+                 >
+                   <div className={`w-2 h-2 rounded-full ${settings.theme === 'dark' ? 'bg-indigo-500' : 'bg-orange-500'}`}></div>
+                   Theme: {settings.theme}
+                 </button>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+              {/* Agent Settings */}
+              <div className={`${cardBase} space-y-8`}>
+                <h3 className="text-xs font-black uppercase tracking-widest text-blue-500">Autonomous Agent</h3>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+                    <div>
+                      <p className="text-xs font-black uppercase">Enable Manus Engine</p>
+                      <p className="text-[9px] opacity-40 uppercase mt-1">Recursive Pipeline Cycles</p>
+                    </div>
+                    <input type="checkbox" checked={settings.autonomousAgentActive} onChange={e => setSettings({...settings, autonomousAgentActive: e.target.checked})} className="w-6 h-6 accent-blue-600" />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Parallel Instance Count</label>
+                    <div className="flex gap-2">
+                       {[1, 2, 4, 8, 16].map(num => (
+                         <button key={num} onClick={() => setSettings({...settings, parallelInstanceCount: num})} className={`flex-1 py-3 rounded-xl border text-xs font-black transition-all ${settings.parallelInstanceCount === num ? 'bg-blue-600 border-blue-500 shadow-lg shadow-blue-600/20 text-white' : 'bg-white/5 border-white/10 hover:border-white/30 text-slate-400'}`}>
+                           {num}x
+                         </button>
+                       ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5">
+                    <span className="text-xs font-black uppercase">Hybrid Cloud Sync</span>
+                    <input type="checkbox" checked={settings.hybridCloudSync} onChange={e => setSettings({...settings, hybridCloudSync: e.target.checked})} className="w-6 h-6 accent-blue-600" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Vertex Core */}
+              <div className={`${cardBase} xl:col-span-2 space-y-10`}>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Vertex Core Parameters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                   <div className="space-y-8">
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-60">
+                           <span>Reasoning Temp</span>
+                           <span className="text-blue-500">{settings.temperature}</span>
+                        </div>
+                        <input type="range" min="0" max="1" step="0.01" value={settings.temperature} onChange={e => setSettings({...settings, temperature: parseFloat(e.target.value)})} className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                     </div>
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase opacity-60">
+                           <span>Top-P Sampling</span>
+                           <span className="text-blue-500">{settings.topP}</span>
+                        </div>
+                        <input type="range" min="0" max="1" step="0.01" value={settings.topP} onChange={e => setSettings({...settings, topP: parseFloat(e.target.value)})} className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                     </div>
+                   </div>
+                   <div className="space-y-8">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Sovereign Model</label>
+                        <select value={settings.aiModel} onChange={e => setSettings({...settings, aiModel: e.target.value})} className="w-full bg-black/60 border border-white/10 p-4 rounded-2xl text-xs font-black outline-none text-blue-400">
+                           <option value="gemini-3-pro-preview">Gemini 3 Pro Sovereign</option>
+                           <option value="gemini-3-flash-preview">Gemini 3 Flash Native</option>
+                           <option value="gemini-2.5-flash-lite-latest">Gemini 2.5 Flash Lite</option>
+                        </select>
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest opacity-60">Regional Endpoint</label>
+                        <select value={settings.vertexEndpoint} onChange={e => setSettings({...settings, vertexEndpoint: e.target.value as any})} className="w-full bg-black/60 border border-white/10 p-4 rounded-2xl text-xs font-black outline-none">
+                           <option value="us-central1">Iowa (us-central1)</option>
+                           <option value="europe-west1">Belgium (europe-west1)</option>
+                           <option value="asia-northeast1">Tokyo (asia-northeast1)</option>
+                        </select>
+                     </div>
+                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'pipeline':
+        return (
+          <div className="flex-1 flex flex-col p-12 overflow-auto space-y-12 bg-black animate-in fade-in duration-700">
+             <header className="flex justify-between items-end border-b border-white/10 pb-8">
+              <div>
+                <h2 className="text-5xl font-black tracking-tighter uppercase italic">Autonomous Pipeline</h2>
+                <p className="text-[10px] opacity-40 font-mono-code uppercase tracking-[0.4em] mt-2">Recursive State Synchronization Engine</p>
+              </div>
+              <div className="flex items-center gap-6">
                 <div className="flex flex-col items-end">
-                   <span className="text-[10px] font-black opacity-30 uppercase">Node: us-central1-a</span>
-                   <span className="text-xs font-bold text-green-500">GLOBAL LB: ACTIVE</span>
+                  <span className="text-[10px] font-black uppercase opacity-40">Agent Status</span>
+                  <span className="text-xs font-black text-blue-500 animate-pulse">RECURSIVE REFACTORING ACTIVE</span>
                 </div>
               </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className={`${cardBase} h-32 flex flex-col justify-between`}>
-                <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">CPU LOAD</span>
-                <span className="text-3xl font-black">{metrics.cpuUsage}%</span>
-              </div>
-              <div className={`${cardBase} h-32 flex flex-col justify-between`}>
-                <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">P99 LATENCY</span>
-                <span className="text-3xl font-black">{metrics.apiLatency}ms</span>
-              </div>
-              <div className={`${cardBase} h-32 flex flex-col justify-between`}>
-                <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">TRAFFIC (REQ/S)</span>
-                <span className="text-3xl font-black">2.4k</span>
-              </div>
-              <div className={`${cardBase} h-32 flex flex-col justify-between`}>
-                <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">SERVERLESS EXECS</span>
-                <span className="text-3xl font-black">{(metrics.serverlessExecutionCount / 1000).toFixed(1)}k</span>
-              </div>
-            </div>
-
-            <div className={`${cardBase} space-y-8`}>
-              <div className="flex justify-between items-center">
-                 <h3 className="text-2xl font-black tracking-tighter uppercase">Cloud Run Orchestrator</h3>
-                 <button className="text-[10px] font-black uppercase text-blue-500 hover:underline">Provision New Instance</button>
-              </div>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {cloudRunServices.map(svc => (
-                  <div key={svc.id} className="p-5 bg-black/40 border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-black/60 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${svc.status === 'READY' ? 'bg-green-500' : 'bg-yellow-500'} shadow-lg shadow-inherit`}></div>
-                      <div>
-                        <p className="font-black text-sm uppercase">{svc.name}</p>
-                        <p className="text-[9px] opacity-30 font-mono-code">{svc.location} | v1.0.42</p>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+               {pipelineSteps.map((step) => (
+                 <div key={step.id} className={`${cardBase} flex flex-col gap-6 ${step.status === 'active' ? 'border-blue-500 shadow-blue-500/20' : ''}`}>
+                    <div className="flex justify-between items-center">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black ${
+                        step.status === 'completed' ? 'bg-green-500 text-white' : 
+                        step.status === 'active' ? 'bg-blue-600 text-white animate-pulse' : 'bg-white/5 text-white/20'
+                      }`}>
+                        {step.id}
+                      </div>
+                      <span className={`text-[9px] font-black uppercase tracking-widest ${
+                        step.status === 'completed' ? 'text-green-500' : 
+                        step.status === 'active' ? 'text-blue-500' : 'opacity-20'
+                      }`}>{step.status}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-black text-sm uppercase text-white mb-2">{step.label}</h4>
+                      <div className="space-y-1 mt-4">
+                        {step.logs.map((log, i) => (
+                          <p key={i} className="text-[9px] font-mono-code opacity-40 leading-relaxed truncate">{log}</p>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex gap-4 items-center">
-                       <div className="text-right">
-                          <p className="text-[9px] font-black opacity-40">TRAFFIC</p>
-                          <p className="text-xs font-bold">{svc.traffic}%</p>
-                       </div>
-                       <button className="p-2 opacity-0 group-hover:opacity-100 bg-white/5 rounded-lg hover:text-blue-500 transition-all">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                       </button>
-                    </div>
-                  </div>
-                ))}
+                 </div>
+               ))}
+            </div>
+
+            <div className={`${cardBase} flex-1 min-h-[400px] flex flex-col p-0 overflow-hidden`}>
+               <div className="p-6 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                 <h3 className="text-sm font-black uppercase tracking-widest">Active Execution Sandbox</h3>
+                 <div className="flex items-center gap-4">
+                    <span className="text-[9px] font-mono-code opacity-30">Thread: T-X144</span>
+                    <button className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-black uppercase">Kill Process</button>
+                 </div>
+               </div>
+               <div className="flex-1 bg-black">
+                  <MonacoEditor activeFile={{ id: 'sandbox', name: 'sandbox-execution.log', language: 'markdown', content: pipelineSteps.flatMap(s => s.logs).join('\n') }} theme={settings.theme} />
+               </div>
+            </div>
+          </div>
+        );
+      case 'admin':
+        return (
+          <div className="flex-1 flex flex-col p-12 overflow-auto space-y-12 animate-in slide-in-from-bottom-10 duration-500">
+             <header className="flex justify-between items-end border-b border-white/10 pb-8">
+              <div>
+                <h2 className="text-5xl font-black tracking-tighter uppercase italic">Infrastructure Admin</h2>
+                <p className="text-[10px] opacity-40 font-mono-code uppercase tracking-[0.4em] mt-2">Bare Metal & Docker Container Orchestrator</p>
               </div>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: 'Cluster Load', val: `${metrics.cpuUsage}%`, color: 'text-blue-400' },
+                { label: 'Api P99', val: `${metrics.apiLatency}ms`, color: 'text-purple-400' },
+                { label: 'Active Containers', val: '24', color: 'text-green-400' },
+                { label: 'Cloud Executions', val: '890.2k', color: 'text-orange-400' }
+              ].map(stat => (
+                <div key={stat.label} className={`${cardBase} h-32 flex flex-col justify-between`}>
+                  <span className="text-[10px] font-black opacity-40 uppercase tracking-widest">{stat.label}</span>
+                  <span className={`text-3xl font-black ${stat.color}`}>{stat.val}</span>
+                </div>
+              ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                <div className={`${cardBase} space-y-6`}>
                   <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-black tracking-tighter">DOCKER DESKTOP MIRROR</h3>
-                    <span className="px-2 py-0.5 bg-blue-500/20 text-blue-500 text-[9px] font-black rounded">LOCAL SYNC: ON</span>
+                    <h3 className="text-sm font-black uppercase tracking-widest">Persistent Docker Sync</h3>
+                    <div className="flex items-center gap-2">
+                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                       <span className="text-[10px] font-black uppercase opacity-60">Connected: Desktop Mirror</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {dockerMirror.map(container => (
-                      <div key={container.id} className="p-4 bg-black/30 border border-white/5 rounded-xl flex items-center justify-between">
-                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-600/10 rounded flex items-center justify-center text-blue-500">🐳</div>
-                            <div>
-                               <p className="text-xs font-bold uppercase">{container.name}</p>
-                               <p className="text-[9px] opacity-40 font-mono-code">{container.image} | {container.ports}</p>
-                            </div>
-                         </div>
-                         <div className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                            <span className="text-[9px] font-black uppercase opacity-60">{container.status}</span>
-                         </div>
-                      </div>
-                    ))}
+                  <div className="bg-black/40 rounded-2xl border border-white/5 overflow-hidden">
+                     <div className="p-4 border-b border-white/5 flex justify-between items-center text-[10px] font-black uppercase opacity-40">
+                        <span>Image ID</span>
+                        <span>Status</span>
+                     </div>
+                     {[1, 2, 3].map(i => (
+                       <div key={i} className="p-4 border-b border-white/5 last:border-0 flex justify-between items-center group hover:bg-white/5 transition-all">
+                          <span className="text-xs font-mono-code opacity-80">vix-runtime-0{i}:latest</span>
+                          <span className="text-[10px] font-black text-green-500 uppercase">Running</span>
+                       </div>
+                     ))}
                   </div>
                </div>
 
                <div className={`${cardBase} space-y-6`}>
-                  <h3 className="text-xl font-black tracking-tighter uppercase">Vertex AI Status</h3>
+                  <h3 className="text-sm font-black uppercase tracking-widest">GCP Governance</h3>
                   <div className="space-y-4">
-                     <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-60">Gemini 3 Pro (Thinking)</span>
-                        <span className="text-green-500 font-bold uppercase text-xs">Healthy</span>
-                     </div>
-                     <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-60">Imagen 4.0 / Nano Banana</span>
-                        <span className="text-green-500 font-bold uppercase text-xs">Healthy</span>
-                     </div>
-                     <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-60">Veo Video Engine</span>
-                        <span className="text-green-500 font-bold uppercase text-xs">Healthy</span>
-                     </div>
+                     {[
+                       { label: 'Vertex AI API', status: 'Enabled' },
+                       { label: 'Cloud Run Service', status: 'Healthy' },
+                       { label: 'BigQuery Persistence', status: 'Active' },
+                       { label: 'Identity Engine', status: 'Locked' },
+                     ].map(gov => (
+                       <div key={gov.label} className="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                          <span className="text-xs font-bold text-white/60">{gov.label}</span>
+                          <span className="text-[9px] font-black text-blue-500 uppercase">{gov.status}</span>
+                       </div>
+                     ))}
                   </div>
-               </div>
-            </div>
-
-            <div className={`${cardBase} flex-1 min-h-[500px] flex flex-col`}>
-               <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-2xl font-black tracking-tighter uppercase">Infrastructure Sandbox</h3>
-                 <span className="text-[10px] font-mono-code opacity-40">Command Center Console</span>
-               </div>
-               <div className="flex-1 rounded-2xl overflow-hidden border border-white/10 bg-black">
-                 <MonacoEditor activeFile={activeFile} theme={settings.theme} />
                </div>
             </div>
           </div>
         );
-      case 'settings':
+      case 'preview':
         return (
-          <div className="flex-1 flex flex-col p-12 overflow-auto space-y-12 custom-scrollbar">
-            <header className="flex justify-between items-end border-b border-white/10 pb-8">
-              <div>
-                <h2 className="text-5xl font-black tracking-tighter">STUDIO SETTINGS</h2>
-                <p className="text-[10px] opacity-40 font-mono-code uppercase tracking-[0.3em] mt-2">Governance & Account Settings</p>
-              </div>
-            </header>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              <section className={`${cardBase} space-y-8`}>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-40">AI Model Orchestration</h3>
-                <div className="space-y-6">
-                   <div className="space-y-3">
-                      <label className="text-sm font-black uppercase tracking-widest">Global Default Model</label>
-                      <select className="w-full bg-black/40 border border-white/10 p-4 rounded-xl text-sm outline-none font-bold">
-                        <option>Gemini 3 Pro (Thinking Active)</option>
-                        <option>Gemini 3 Flash (Real-time)</option>
-                        <option>Gemini 2.5 Flash Lite (Edge)</option>
-                      </select>
-                   </div>
-                   <div className="flex items-center justify-between p-4 bg-black/20 rounded-xl">
-                      <span className="text-sm font-bold text-white">Automated Governance Checks</span>
-                      <input type="checkbox" checked={settings.autoLint} onChange={e => setSettings({...settings, autoLint: e.target.checked})} className="w-6 h-6 accent-blue-600" />
-                   </div>
-                   <div className="flex items-center justify-between p-4 bg-black/20 rounded-xl">
-                      <span className="text-sm font-bold text-white">Standard Sandbox Isolation</span>
-                      <input type="checkbox" checked={settings.sandboxMode} onChange={e => setSettings({...settings, sandboxMode: e.target.checked})} className="w-6 h-6 accent-blue-600" />
-                   </div>
-                </div>
-              </section>
-
-              <section className={`${cardBase} space-y-8`}>
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-40">Developer Identity</h3>
-                <div className="space-y-6">
-                   <div className="space-y-2">
-                      <label className="text-sm font-black text-white">AI REASONING BUDGET (TEMP)</label>
-                      <input type="range" min="0" max="1" step="0.1" value={settings.temperature} onChange={e => setSettings({...settings, temperature: parseFloat(e.target.value)})} className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                   </div>
-                </div>
-              </section>
+          <div className="flex-1 flex flex-col bg-black p-6">
+            <div className="h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-8 backdrop-blur-xl mb-6">
+               <div className="flex items-center gap-4">
+                  <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse"></div>
+                  <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white">Preview Container: {activeFile?.name}</h3>
+               </div>
+               <button onClick={() => setView('chat')} className="px-5 py-2 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl shadow-red-500/20">Exit Sandbox</button>
+            </div>
+            <div className="flex-1 rounded-3xl bg-white overflow-hidden shadow-2xl relative">
+              {livePreviewUrl ? (
+                <iframe src={livePreviewUrl} className="w-full h-full border-0" title="Vizual X Live Preview" />
+              ) : (
+                <div className="flex items-center justify-center h-full text-zinc-400 font-mono-code text-sm">Initializing Runtime Engine...</div>
+              )}
             </div>
           </div>
         );
       default:
-        return <MonacoEditor activeFile={activeFile} lastSaved={lastSaved} onContentChange={(c) => activeFile && setFiles(prev => prev.map(f => f.id === activeFile.id ? {...f, content: c} : f))} theme={settings.theme} />;
+        return (
+          <div className="flex-1 flex flex-col h-full relative">
+            <MonacoEditor 
+              activeFile={activeFile} 
+              onRefactor={async (f) => analyzeCodeForRefactoring(f.name, f.content)}
+              lastSaved={lastSaved} 
+              onContentChange={(c) => activeFile && setFiles(prev => prev.map(f => f.id === activeFile.id ? {...f, content: c} : f))} 
+              theme={settings.theme} 
+            />
+            {/* Autonomous Action Bar */}
+            <div className={`h-16 border-t px-8 flex items-center justify-between ${settings.theme === 'light' ? 'bg-white border-black/10' : 'bg-zinc-900 border-white/5 shadow-[0_-20px_50px_rgba(0,0,0,0.5)]'}`}>
+               <div className="flex items-center gap-6">
+                  <button onClick={triggerPipeline} className="flex items-center gap-3 px-6 py-2.5 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-blue-600/30">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.536 14.243a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707zM16 18a1 1 0 100-2 1 1 0 000 2z" /></svg>
+                    Recursive Pipeline
+                  </button>
+                  <button onClick={() => setSettings(s => ({...s, hybridCloudSync: !s.hybridCloudSync}))} className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${settings.hybridCloudSync ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-white/5 text-white/40 border border-white/10'}`}>
+                    Cloud/Docker Sync: {settings.hybridCloudSync ? 'Active' : 'Offline'}
+                  </button>
+               </div>
+               <div className="flex items-center gap-4 text-[9px] font-mono-code opacity-30 uppercase tracking-[0.3em]">
+                  <span>Instances: {settings.parallelInstanceCount}x</span>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>Sovereign Link: Stable</span>
+               </div>
+            </div>
+          </div>
+        );
     }
   };
 
   return (
     <div className={`flex h-screen w-full transition-colors duration-500 ${settings.theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-black text-white'} overflow-hidden font-inter`}>
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className={`absolute top-[-10%] right-[-10%] w-[60%] h-[60%] ${settings.theme === 'light' ? 'bg-blue-200/10' : 'bg-blue-900/10'} blur-[180px] rounded-full`}></div>
-        <div className={`absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] ${settings.theme === 'light' ? 'bg-purple-200/10' : 'bg-purple-900/10'} blur-[180px] rounded-full`}></div>
+      {/* Sovereign Grid Background */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className={`absolute inset-0 ${settings.theme === 'light' ? 'opacity-[0.03]' : 'opacity-[0.15]'}`} style={{ backgroundImage: `radial-gradient(circle at 2px 2px, ${settings.theme === 'light' ? 'black' : 'white'} 1px, transparent 0)`, backgroundSize: '40px 40px' }}></div>
+        <div className={`absolute top-[-20%] left-[-10%] w-[80%] h-[80%] ${settings.theme === 'light' ? 'bg-blue-400/10' : 'bg-blue-600/5'} blur-[250px] rounded-full`}></div>
+        <div className={`absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] ${settings.theme === 'light' ? 'bg-indigo-400/10' : 'bg-indigo-600/5'} blur-[200px] rounded-full`}></div>
       </div>
 
       <div className="relative z-10 flex w-full h-full">
@@ -412,7 +473,7 @@ const App: React.FC = () => {
           onToggleTheme={() => setSettings(prev => ({...prev, theme: prev.theme === 'dark' ? 'light' : 'dark'}))} 
           onRollback={(id) => {
             const snap = actionHistory.find(a => a.id === id);
-            if (snap) { setFiles(snap.filesSnapshot); recordAction('rollback', `Manual Rollback to Snapshot #${id}`, snap.filesSnapshot); }
+            if (snap) { setFiles(snap.filesSnapshot); }
           }} 
           actionHistory={actionHistory} recommendation={recommendation}
         />

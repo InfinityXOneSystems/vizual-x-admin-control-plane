@@ -31,15 +31,24 @@ export interface FileData {
   content: string;
 }
 
-export type AppView = 'chat' | 'settings' | 'admin';
+export interface RefactorSuggestion {
+  id: string;
+  title: string;
+  description: string;
+  category: 'quality' | 'performance' | 'readability';
+  refactoredCode: string;
+}
+
+export type AppView = 'chat' | 'settings' | 'admin' | 'preview' | 'pipeline';
 export type Theme = 'light' | 'dark';
 export type ActionStatus = 'perfect' | 'warning' | 'critical';
+export type EditingMode = 'no-code' | 'low-code' | 'full-code';
 
 export interface ProjectAction {
   id: string;
   timestamp: Date;
   description: string;
-  type: 'code_injection' | 'file_delete' | 'setting_change' | 'rollback' | 'lint_fix';
+  type: 'code_injection' | 'file_delete' | 'setting_change' | 'rollback' | 'lint_fix' | 'autonomous_patch';
   filesSnapshot: FileData[];
   status: ActionStatus;
   isLocked: boolean;
@@ -75,6 +84,13 @@ export interface Connector {
   icon?: string;
 }
 
+export interface SafetySettings {
+  harassment: 'BLOCK_NONE' | 'BLOCK_LOW_AND_ABOVE' | 'BLOCK_MEDIUM_AND_ABOVE' | 'BLOCK_ONLY_HIGH';
+  hateSpeech: 'BLOCK_NONE' | 'BLOCK_LOW_AND_ABOVE' | 'BLOCK_MEDIUM_AND_ABOVE' | 'BLOCK_ONLY_HIGH';
+  sexuallyExplicit: 'BLOCK_NONE' | 'BLOCK_LOW_AND_ABOVE' | 'BLOCK_MEDIUM_AND_ABOVE' | 'BLOCK_ONLY_HIGH';
+  dangerousContent: 'BLOCK_NONE' | 'BLOCK_LOW_AND_ABOVE' | 'BLOCK_MEDIUM_AND_ABOVE' | 'BLOCK_ONLY_HIGH';
+}
+
 export interface AppSettings {
   theme: Theme;
   userName: string;
@@ -84,9 +100,27 @@ export interface AppSettings {
   advancedSecurity: boolean;
   aiModel: string;
   temperature: number;
+  topP: number;
+  topK: number;
   maxTokens: number;
+  thinkingBudget: number;
   googleStudioFeatures: boolean;
   githubSparksEnabled: boolean;
+  safety: SafetySettings;
+  vertexEndpoint: 'us-central1' | 'europe-west1' | 'asia-northeast1';
+  groundingEnabled: boolean;
+  editingMode: EditingMode;
+  autonomousAgentActive: boolean;
+  parallelInstanceCount: number;
+  hybridCloudSync: boolean;
+}
+
+export interface PipelineStep {
+  id: string;
+  label: string;
+  status: 'pending' | 'active' | 'completed' | 'failed';
+  timestamp: Date;
+  logs: string[];
 }
 
 export interface AIRecommendation {
@@ -104,7 +138,6 @@ export interface AdminMetrics {
   serverlessExecutionCount: number;
 }
 
-// Added GitCommit interface to fix missing export error in GitPanel.tsx
 export interface GitCommit {
   id: string;
   message: string;

@@ -54,32 +54,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     }
   };
 
-  const getStatusIcon = (status: ProjectAction['status']) => {
-    const circleClass = "w-7 h-7 rounded-full flex items-center justify-center border-2 shadow-sm flex-shrink-0 transition-all";
-    switch (status) {
-      case 'perfect':
-        return (
-          <div className={`${circleClass} bg-green-500/10 border-green-500 text-green-500`} title="Industry Standard: Perfect">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-          </div>
-        );
-      case 'warning':
-        return (
-          <div className={`${circleClass} bg-yellow-500/10 border-yellow-500 text-yellow-500 animate-pulse`} title="Standard Violation: Warning">
-            <span className="font-black text-sm">!</span>
-          </div>
-        );
-      case 'critical':
-        return (
-          <div className={`${circleClass} bg-red-500/10 border-red-500 text-red-500`} title="Governance Failure: Critical">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-          </div>
-        );
-    }
-  };
-
   return (
-    <div className={`flex flex-col h-full glass-panel w-full md:w-[450px] lg:w-[500px] transition-all duration-300 relative border-r ${theme === 'light' ? 'text-slate-900 border-black/10 bg-white/40' : 'text-white border-white/10 bg-black/60'}`}>
+    <div className={`flex flex-col h-full glass-panel w-full md:w-[450px] lg:w-[500px] transition-all duration-300 relative border-r ${theme === 'light' ? 'text-slate-900 border-black/10 bg-white/40' : 'text-white border-white/10 bg-black/60 shadow-[20px_0_100px_rgba(0,0,0,0.8)]'}`}>
       
       <PromptLibrary 
         isOpen={isPromptLibraryOpen} 
@@ -87,251 +63,127 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         onSelectPrompt={(p) => setInput(p)}
       />
 
-      {/* Action History Popup */}
-      {showHistoryPopup && (
-        <div ref={popupRef} className="absolute left-[102%] top-20 w-[350px] bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-2xl rounded-2xl z-[100] animate-in fade-in slide-in-from-left-4 duration-200 p-1">
-          <div className="p-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center">
-            <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60">System Events Timeline</h4>
-            <button onClick={() => setShowHistoryPopup(false)} className="text-[10px] bg-black/5 dark:bg-white/5 px-2 py-1 rounded">ESC</button>
-          </div>
-          <div className="max-h-[500px] overflow-auto py-1">
-            {actionHistory.slice(0, 10).map((action) => (
-              <div key={action.id} className="px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition-all flex gap-3 group border-b border-black/5 dark:border-white/5 last:border-0">
-                <div className="pt-1">{getStatusIcon(action.status)}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-mono-code font-bold opacity-40">#{action.id}</span>
-                    <span className="text-[9px] opacity-40 font-mono-code">{new Date(action.timestamp).toLocaleTimeString()}</span>
-                  </div>
-                  <p className="text-xs font-semibold truncate mb-1">{action.description}</p>
-                  <button onClick={() => onRollback(action.id)} className="text-[9px] text-blue-500 font-bold uppercase opacity-0 group-hover:opacity-100 transition-opacity">Rollback State</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Header */}
-      <div className="p-6 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-black/5 dark:bg-white/5">
+      <div className="p-8 border-b border-black/10 dark:border-white/10 flex justify-between items-center bg-black/5 dark:bg-white/5">
         <div className="cursor-pointer group" onClick={() => onViewChange('chat')}>
-          <h1 className="text-xl font-black tracking-tighter flex items-center gap-2 group-hover:text-blue-500 transition-colors">
-            <div className="w-4 h-4 bg-blue-600 rounded-sm rotate-45"></div>
+          <h1 className="text-3xl font-black tracking-tighter flex items-center gap-3 group-hover:text-blue-500 transition-all italic">
+            <div className="w-6 h-6 bg-blue-600 rounded-sm rotate-45 shadow-2xl shadow-blue-600/40 border border-white/20"></div>
             VIZUAL X
           </h1>
-          <p className="text-[9px] opacity-40 uppercase tracking-[0.2em] font-mono-code font-bold">Autonomous Control Center</p>
+          <p className="text-[10px] opacity-40 uppercase tracking-[0.4em] font-mono-code font-black mt-1">Sovereign Flagship Hub</p>
         </div>
-        <div className="flex items-center gap-2">
-           {/* Prompt Library Button */}
+        <div className="flex items-center gap-3">
            <button 
              onClick={() => setIsPromptLibraryOpen(true)}
-             className="p-2 opacity-60 hover:opacity-100 hover:text-blue-500 transition-all"
-             title="Master Prompt Library"
+             className="p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-blue-500 transition-all text-white hover:shadow-lg hover:shadow-blue-500/10"
+             title="Prompt Core"
            >
-             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-             </svg>
+             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
            </button>
-           <button onClick={() => setShowExplorer(!showExplorer)} className={`p-2 transition-all ${showExplorer ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'}`}>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h18M3 12h18M3 17h18" strokeWidth="2" strokeLinecap="round" /></svg>
+           <button onClick={() => setShowExplorer(!showExplorer)} className={`p-3 rounded-2xl border transition-all ${showExplorer ? 'bg-blue-600 text-white border-blue-500' : 'bg-white/5 text-white/40 border-white/5 hover:border-white/20'}`}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h18M3 12h18M3 17h18" strokeWidth="2.5" strokeLinecap="round" /></svg>
            </button>
         </div>
       </div>
 
-      {/* File Explorer */}
+      {/* Workspace Registry */}
       {showExplorer && (
-        <div className="border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-4 max-h-64 overflow-y-auto custom-scrollbar animate-in slide-in-from-top-2 duration-200">
-          <div className="flex justify-between items-center mb-3 px-2">
-             <h3 className="text-[9px] font-black uppercase tracking-widest opacity-60">Sandbox Workspace</h3>
-             <span className="text-[9px] opacity-40 font-mono-code">{files.length} Files</span>
+        <div className="border-b border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 p-6 max-h-64 overflow-y-auto custom-scrollbar animate-in slide-in-from-top-4 duration-300">
+          <div className="flex justify-between items-center mb-4 px-2">
+             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-40 italic">Active System Nodes</h3>
+             <span className="text-[10px] opacity-40 font-mono-code">TOTAL: {files.length}</span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {files.map(file => (
               <div 
                 key={file.id} 
                 onClick={() => onSelectFile(file.id)}
-                className={`group flex items-center justify-between p-2 rounded-lg cursor-pointer transition-all ${
-                  activeFileId === file.id ? 'bg-blue-600/10 border border-blue-500/20 text-blue-500' : 'hover:bg-black/5 dark:hover:bg-white/5'
+                className={`group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all border ${
+                  activeFileId === file.id ? 'bg-blue-600/10 border-blue-500/40 text-blue-500 shadow-xl shadow-blue-500/5' : 'bg-black/20 border-white/5 hover:border-white/10'
                 }`}
               >
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <span className={`text-[10px] font-bold ${activeFileId === file.id ? 'text-blue-500' : 'opacity-40'}`}>
-                    {['javascript', 'js', 'typescript', 'ts', 'tsx'].includes(file.language.toLowerCase()) ? '</>' : '•'}
-                  </span>
-                  <span className={`text-xs font-mono-code truncate ${activeFileId === file.id ? 'font-bold' : ''}`}>{file.name}</span>
+                <div className="flex items-center gap-4 overflow-hidden">
+                  <div className={`w-2 h-2 rounded-full ${activeFileId === file.id ? 'bg-blue-500 shadow-lg shadow-blue-500/40' : 'bg-white/10'}`}></div>
+                  <span className={`text-xs font-mono-code truncate ${activeFileId === file.id ? 'font-black' : 'font-medium opacity-60'}`}>{file.name}</span>
                 </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onDeleteFile(file.id); }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-opacity"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Chat Thread */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-10 scroll-smooth custom-scrollbar">
-        {messages.map((msg) => {
-          const action = msg.actionId ? actionHistory.find(a => a.id === msg.actionId) : null;
-          return (
-            <div key={msg.id} className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className={`flex gap-4 mb-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center font-bold text-xs ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
-                  {msg.role === 'user' ? 'U' : 'X'}
-                </div>
-                <div className={`max-w-[85%] p-5 rounded-2xl text-sm leading-relaxed ${
-                  msg.role === 'user' 
-                    ? 'bg-blue-600/5 border border-blue-500/20 text-slate-800 dark:text-slate-200' 
-                    : 'bg-zinc-100/50 dark:bg-zinc-900/80 border border-black/10 dark:border-white/10'
-                }`}>
-                  {msg.content && msg.content.split('\n').map((line, i) => <p key={i} className="mb-2 last:mb-0">{line}</p>)}
-                  
-                  {/* Search Grounding Sources Display */}
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
-                      <p className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">Grounding Sources:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {msg.sources.map((source, idx) => (
-                          <a 
-                            key={idx} 
-                            href={source.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-[10px] font-bold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 bg-blue-500/5 px-2.5 py-1 rounded-lg border border-blue-500/10 transition-all hover:bg-blue-500/10"
-                          >
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            {source.title}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Media Rendering */}
-                  {msg.media && (
-                    <div className="mt-4 rounded-xl overflow-hidden border border-white/10 shadow-lg">
-                      {msg.media.type === 'image' && <img src={msg.media.url} alt="Generated" className="w-full object-contain" />}
-                      {msg.media.type === 'video' && <video src={msg.media.url} controls className="w-full" />}
-                    </div>
-                  )}
-                </div>
+      {/* Sovereign Thread */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-12 scroll-smooth custom-scrollbar">
+        {messages.map((msg) => (
+          <div key={msg.id} className="flex flex-col animate-in fade-in slide-in-from-bottom-10 duration-700">
+            <div className={`flex gap-6 mb-8 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div className={`w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center font-black text-[10px] uppercase border ${msg.role === 'user' ? 'bg-blue-600 text-white border-blue-400 shadow-2xl shadow-blue-600/40' : 'bg-zinc-800 text-zinc-400 border-white/5'}`}>
+                {msg.role === 'user' ? 'USR' : 'VIX'}
               </div>
-
-              {action && (
-                <div className="ml-12 mb-8 animate-in zoom-in-95 duration-300">
-                  <div className={`rounded-2xl border overflow-hidden shadow-2xl ${
-                    theme === 'light' ? 'bg-white border-black/10' : 'bg-[#0a0a0a] border-white/5'
-                  }`}>
-                    <div className="px-4 py-3 border-b border-inherit flex justify-between items-center bg-black/5 dark:bg-white/5">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Sandbox Environment</span>
-                        {action.isLocked && <svg className="w-3 h-3 opacity-30" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>}
-                      </div>
-                      <span className="text-[9px] font-mono-code opacity-30">HEX: {action.id.toUpperCase()}</span>
-                    </div>
-
-                    <div className="flex items-stretch gap-4 p-4">
-                      <div className="flex-1 font-mono-code text-[11px] bg-black/5 dark:bg-black/50 p-4 rounded-xl border border-black/5 dark:border-white/5 max-h-60 overflow-auto whitespace-pre custom-scrollbar">
-                        {action.codeSnippet || "// Initializing Sandbox..."}
-                      </div>
-                      
-                      <div className="flex flex-col items-center justify-center gap-3 px-2">
-                        {getStatusIcon(action.status)}
-                        <button 
-                          onClick={() => onRollback(action.id)} 
-                          className="p-2 rounded-xl bg-blue-500/10 text-blue-500 hover:bg-blue-600 hover:text-white transition-all shadow-lg"
-                          title="Rollback this action"
-                        >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className={`px-5 py-3 text-[10px] font-black border-t border-inherit tracking-tight ${
-                      action.status === 'perfect' ? 'text-green-500 bg-green-500/5' : 'text-blue-500 bg-blue-500/5'
-                    }`}>
-                      {action.status === 'perfect' 
-                        ? (action.enhancementSuggestion || "GOOGLE BENCHMARK: 100% PERFECT. OPTIMIZATION: CONVERT TO TAILWIND JIT FOR PERFORMANCE.") 
-                        : (action.fixSuggestion || "GITHUB AUTO-FIX: RESOLVED PROTOCOL MISMATCH IN DATA PERSISTENCE LAYER.")}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className={`max-w-[85%] p-7 rounded-3xl text-[13px] leading-relaxed font-medium ${
+                msg.role === 'user' 
+                  ? 'bg-blue-600/5 border border-blue-500/20 text-slate-800 dark:text-slate-200' 
+                  : 'bg-zinc-100/50 dark:bg-zinc-900/80 border border-black/10 dark:border-white/10 shadow-2xl'
+              }`}>
+                {msg.content && msg.content.split('\n').map((line, i) => <p key={i} className="mb-3 last:mb-0">{line}</p>)}
+              </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex gap-6 animate-pulse">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-white/5"></div>
+            <div className="flex-1 h-20 bg-zinc-900/80 rounded-3xl border border-white/10"></div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom Section */}
-      <div className="p-6 border-t border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 space-y-4">
+      {/* Global Navigation Hub */}
+      <div className="p-8 border-t border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 space-y-6">
         
         {recommendation && (
-          <div className={`p-3 rounded-xl border flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-500 ${
-            recommendation.priority === 'high' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' : 'bg-black/5 border-black/5'
-          }`}>
-             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-             <p className="text-[10px] font-black uppercase tracking-[0.15em] leading-tight">
-               {recommendation.text}
-             </p>
+          <div className="p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-500 flex items-center gap-5 animate-in slide-in-from-bottom-4 duration-500 shadow-xl shadow-blue-500/5">
+             <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+             <p className="text-[11px] font-black uppercase tracking-widest leading-snug">{recommendation.text}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className="relative group">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isLoading}
-            placeholder="Command autonomous sandbox agent..."
-            className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-blue-500 outline-none rounded-2xl py-4 pl-5 pr-14 text-sm transition-all shadow-inner"
+            placeholder="System Command Orchestrator..."
+            className="w-full bg-black/10 dark:bg-white/5 border border-black/10 dark:border-white/10 focus:border-blue-500 outline-none rounded-3xl py-6 pl-8 pr-20 text-sm transition-all shadow-inner font-bold"
           />
-          <button type="submit" disabled={!input.trim() || isLoading} className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-xl bg-blue-600 text-white shadow-xl shadow-blue-600/30 active:scale-90 transition-transform">
-            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+          <button type="submit" disabled={!input.trim() || isLoading} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-4 rounded-2xl bg-blue-600 text-white shadow-2xl shadow-blue-600/50 active:scale-90 transition-transform disabled:opacity-30">
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
           </button>
         </form>
 
         <div className="flex justify-between items-center px-2">
-          <div className="flex items-center gap-4">
-            <button onClick={onToggleTheme} className="p-1.5 opacity-40 hover:opacity-100 transition-all hover:text-blue-500" title="Switch Theme">
-              {theme === 'dark' ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
-              )}
-            </button>
-
-            <button 
-              onClick={() => onViewChange('admin')} 
-              className={`p-1.5 transition-all ${currentView === 'admin' ? 'text-blue-500 opacity-100 scale-110' : 'opacity-40 hover:opacity-100'} hover:text-blue-500`}
-              title="Universal Admin Control"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            
-            <button 
-              onClick={() => onViewChange('settings')} 
-              className={`p-1.5 transition-all ${currentView === 'settings' ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'} hover:text-blue-500`}
-              title="Studio Settings"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
-
-            <button 
-              onClick={() => setShowHistoryPopup(!showHistoryPopup)} 
-              className={`p-1.5 transition-all hover:text-blue-500 ${showHistoryPopup ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'}`}
-              title="System History Rollback"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-            </button>
+          <div className="flex items-center gap-5">
+            {[
+              { id: 'chat', icon: 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z', title: 'Interface' },
+              { id: 'pipeline', icon: 'M13 10V3L4 14h7v7l9-11h-7z', title: 'Recursive Pipeline' },
+              { id: 'preview', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z', title: 'Sovereign Preview' },
+              { id: 'admin', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10', title: 'Infra Control' },
+              { id: 'settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', title: 'Vertex Console' },
+            ].map(nav => (
+              <button 
+                key={nav.id} 
+                onClick={() => onViewChange(nav.id as AppView)} 
+                className={`p-1.5 transition-all hover:text-blue-500 hover:scale-125 ${currentView === nav.id ? 'text-blue-500 scale-125' : 'opacity-40 hover:opacity-100'}`}
+                title={nav.title}
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={nav.icon} />
+                </svg>
+              </button>
+            ))}
           </div>
-          <span className="text-[9px] opacity-20 font-black uppercase tracking-widest font-mono-code">GOVERNANCE: GOOGLE TAP v3</span>
+          <div className="text-[10px] font-black uppercase tracking-[0.6em] opacity-20 font-mono-code italic">VIZUAL-X V5.2 SOVEREIGN</div>
         </div>
       </div>
     </div>
