@@ -8,6 +8,8 @@ export const AdminControlPlane: React.FC = () => {
   const [matrixStatus, setMatrixStatus] = useState<MatrixStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [error, setError] = useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -19,6 +21,7 @@ export const AdminControlPlane: React.FC = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const [healthData, matrixData] = await Promise.all([
         manusService.getHealth(),
         manusService.getMatrixStatus()
@@ -27,7 +30,9 @@ export const AdminControlPlane: React.FC = () => {
       setMatrixStatus(matrixData);
       setLastRefresh(new Date());
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch admin data';
       console.error('Error fetching data:', error);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -35,13 +40,23 @@ export const AdminControlPlane: React.FC = () => {
 
   const handleSync = async (repo: string) => {
     try {
+      setSyncMessage(null);
       const result = await manusService.syncRepo(repo);
       if (result.success) {
+        setSyncMessage({ type: 'success', text: result.message });
         // Refresh data after sync
         await fetchData();
+        // Clear message after 3 seconds
+        setTimeout(() => setSyncMessage(null), 3000);
+      } else {
+        setSyncMessage({ type: 'error', text: 'Sync failed' });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to sync repository';
       console.error('Error syncing repo:', error);
+      setSyncMessage({ type: 'error', text: errorMessage });
+      // Clear message after 5 seconds
+      setTimeout(() => setSyncMessage(null), 5000);
     }
   };
 
@@ -86,6 +101,30 @@ export const AdminControlPlane: React.FC = () => {
   return (
     <div className="flex-1 p-6 lg:p-12 overflow-y-auto bg-black dark:bg-black light:bg-transparent custom-scrollbar animate-in fade-in duration-1000">
       <div className="max-w-7xl mx-auto space-y-12">
+        
+        {/* Error Banner */}
+        {error && (
+          <div className="p-4 bg-red-900/20 border border-red-600/50 rounded-[20px] flex items-center gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="text-sm font-black neon-red-text uppercase tracking-wider">Error Loading Data</p>
+              <p className="text-xs opacity-60 mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Sync Message Banner */}
+        {syncMessage && (
+          <div className={`p-4 ${syncMessage.type === 'success' ? 'bg-green-900/20 border-green-600/50' : 'bg-red-900/20 border-red-600/50'} border rounded-[20px] flex items-center gap-3`}>
+            <span className="text-2xl">{syncMessage.type === 'success' ? '✅' : '❌'}</span>
+            <div>
+              <p className={`text-sm font-black uppercase tracking-wider ${syncMessage.type === 'success' ? 'neon-green-text' : 'neon-red-text'}`}>
+                {syncMessage.type === 'success' ? 'Sync Successful' : 'Sync Failed'}
+              </p>
+              <p className="text-xs opacity-60 mt-1">{syncMessage.text}</p>
+            </div>
+          </div>
+        )}
         
         {/* Header Section */}
         <section className="space-y-6">

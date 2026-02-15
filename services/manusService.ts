@@ -27,7 +27,16 @@ export class ManusService {
     try {
       const response = await fetch(`${this.baseUrl}/health`);
       if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        // Validate response structure
+        if (data && typeof data.status === 'string' && typeof data.uptime === 'number') {
+          return {
+            status: data.status,
+            timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
+            uptime: data.uptime,
+            version: data.version || 'unknown'
+          };
+        }
       }
       throw new Error('Backend unavailable');
     } catch (error) {
@@ -49,7 +58,17 @@ export class ManusService {
     try {
       const response = await fetch(`${this.baseUrl}/matrix/status`);
       if (response.ok) {
-        return await response.json();
+        const data = await response.json();
+        // Validate and transform response
+        if (data && data.manifest && data.mcpState) {
+          return {
+            manifest: data.manifest,
+            mcpState: {
+              ...data.mcpState,
+              lastSync: data.mcpState.lastSync || new Date().toISOString()
+            }
+          };
+        }
       }
       throw new Error('Backend unavailable');
     } catch (error) {
@@ -127,7 +146,7 @@ export class ManusService {
         connected: true,
         activeAgents: 4,
         syncStatus: 'idle',
-        lastSync: new Date()
+        lastSync: new Date().toISOString()
       }
     };
   }

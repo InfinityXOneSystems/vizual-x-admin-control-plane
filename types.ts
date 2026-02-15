@@ -125,7 +125,7 @@ export interface MCPState {
   connected: boolean;
   activeAgents: number;
   syncStatus: 'idle' | 'syncing' | 'error';
-  lastSync: Date;
+  lastSync: string;
 }
 
 export interface Subsystem {
