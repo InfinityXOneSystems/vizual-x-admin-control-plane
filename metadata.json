@@ -1,5 +1,9 @@
 {
-  "name": "Glass Code Chat",
+  "name": "Vizual-X-Admin",
   "description": "A developer-focused AI assistant with a glassmorphic sidebar and a Monaco-style code viewer, powered by Gemini 3 Flash.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
 }

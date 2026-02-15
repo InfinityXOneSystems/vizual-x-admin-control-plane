@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Message, FileData, AppView, Theme, ProjectAction, AIRecommendation } from '../types';
+import { PromptLibrary } from './PromptLibrary';
 
 interface ChatSidebarProps {
   messages: Message[];
@@ -27,6 +28,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [input, setInput] = useState('');
   const [showHistoryPopup, setShowHistoryPopup] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
+  const [isPromptLibraryOpen, setIsPromptLibraryOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
@@ -77,8 +79,14 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full glass-panel w-full md:w-[450px] lg:w-[500px] transition-all duration-300 relative ${theme === 'light' ? 'text-slate-900 border-black/10 bg-white/40' : 'text-white border-white/10 bg-black/60'}`}>
+    <div className={`flex flex-col h-full glass-panel w-full md:w-[450px] lg:w-[500px] transition-all duration-300 relative border-r ${theme === 'light' ? 'text-slate-900 border-black/10 bg-white/40' : 'text-white border-white/10 bg-black/60'}`}>
       
+      <PromptLibrary 
+        isOpen={isPromptLibraryOpen} 
+        onClose={() => setIsPromptLibraryOpen(false)} 
+        onSelectPrompt={(p) => setInput(p)}
+      />
+
       {/* Action History Popup */}
       {showHistoryPopup && (
         <div ref={popupRef} className="absolute left-[102%] top-20 w-[350px] bg-white dark:bg-zinc-900 border border-black/10 dark:border-white/10 shadow-2xl rounded-2xl z-[100] animate-in fade-in slide-in-from-left-4 duration-200 p-1">
@@ -109,11 +117,21 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         <div className="cursor-pointer group" onClick={() => onViewChange('chat')}>
           <h1 className="text-xl font-black tracking-tighter flex items-center gap-2 group-hover:text-blue-500 transition-colors">
             <div className="w-4 h-4 bg-blue-600 rounded-sm rotate-45"></div>
-            STUDIO AI
+            VIZUAL X
           </h1>
-          <p className="text-[9px] opacity-40 uppercase tracking-[0.2em] font-mono-code font-bold">Standard Sandbox Mode</p>
+          <p className="text-[9px] opacity-40 uppercase tracking-[0.2em] font-mono-code font-bold">Autonomous Control Center</p>
         </div>
         <div className="flex items-center gap-2">
+           {/* Prompt Library Button */}
+           <button 
+             onClick={() => setIsPromptLibraryOpen(true)}
+             className="p-2 opacity-60 hover:opacity-100 hover:text-blue-500 transition-all"
+             title="Master Prompt Library"
+           >
+             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+             </svg>
+           </button>
            <button onClick={() => setShowExplorer(!showExplorer)} className={`p-2 transition-all ${showExplorer ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'}`}>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 7h18M3 12h18M3 17h18" strokeWidth="2" strokeLinecap="round" /></svg>
            </button>
@@ -160,27 +178,55 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           const action = msg.actionId ? actionHistory.find(a => a.id === msg.actionId) : null;
           return (
             <div key={msg.id} className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {/* Message Block */}
               <div className={`flex gap-4 mb-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center font-bold text-xs ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-400'}`}>
-                  {msg.role === 'user' ? 'U' : 'AI'}
+                  {msg.role === 'user' ? 'U' : 'X'}
                 </div>
                 <div className={`max-w-[85%] p-5 rounded-2xl text-sm leading-relaxed ${
                   msg.role === 'user' 
                     ? 'bg-blue-600/5 border border-blue-500/20 text-slate-800 dark:text-slate-200' 
                     : 'bg-zinc-100/50 dark:bg-zinc-900/80 border border-black/10 dark:border-white/10'
                 }`}>
-                  {msg.content.split('\n').map((line, i) => <p key={i} className="mb-2 last:mb-0">{line}</p>)}
+                  {msg.content && msg.content.split('\n').map((line, i) => <p key={i} className="mb-2 last:mb-0">{line}</p>)}
+                  
+                  {/* Search Grounding Sources Display */}
+                  {msg.sources && msg.sources.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
+                      <p className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-2">Grounding Sources:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {msg.sources.map((source, idx) => (
+                          <a 
+                            key={idx} 
+                            href={source.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-[10px] font-bold text-blue-500 hover:text-blue-400 flex items-center gap-1.5 bg-blue-500/5 px-2.5 py-1 rounded-lg border border-blue-500/10 transition-all hover:bg-blue-500/10"
+                          >
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            {source.title}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Media Rendering */}
+                  {msg.media && (
+                    <div className="mt-4 rounded-xl overflow-hidden border border-white/10 shadow-lg">
+                      {msg.media.type === 'image' && <img src={msg.media.url} alt="Generated" className="w-full object-contain" />}
+                      {msg.media.type === 'video' && <video src={msg.media.url} controls className="w-full" />}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Sandbox Card (Standardized Layout) */}
               {action && (
                 <div className="ml-12 mb-8 animate-in zoom-in-95 duration-300">
                   <div className={`rounded-2xl border overflow-hidden shadow-2xl ${
                     theme === 'light' ? 'bg-white border-black/10' : 'bg-[#0a0a0a] border-white/5'
                   }`}>
-                    {/* Sandbox Header */}
                     <div className="px-4 py-3 border-b border-inherit flex justify-between items-center bg-black/5 dark:bg-white/5">
                       <div className="flex items-center gap-3">
                         <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Sandbox Environment</span>
@@ -189,14 +235,11 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       <span className="text-[9px] font-mono-code opacity-30">HEX: {action.id.toUpperCase()}</span>
                     </div>
 
-                    {/* Sandbox Body (Code Left, Status Right) */}
                     <div className="flex items-stretch gap-4 p-4">
-                      {/* Exact Code Implementation on the LEFT */}
                       <div className="flex-1 font-mono-code text-[11px] bg-black/5 dark:bg-black/50 p-4 rounded-xl border border-black/5 dark:border-white/5 max-h-60 overflow-auto whitespace-pre custom-scrollbar">
                         {action.codeSnippet || "// Initializing Sandbox..."}
                       </div>
                       
-                      {/* Status Icon on the RIGHT */}
                       <div className="flex flex-col items-center justify-center gap-3 px-2">
                         {getStatusIcon(action.status)}
                         <button 
@@ -209,7 +252,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       </div>
                     </div>
 
-                    {/* Short Phrase identifying fix or enhancement (Programmatically implemented) */}
                     <div className={`px-5 py-3 text-[10px] font-black border-t border-inherit tracking-tight ${
                       action.status === 'perfect' ? 'text-green-500 bg-green-500/5' : 'text-blue-500 bg-blue-500/5'
                     }`}>
@@ -228,7 +270,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {/* Bottom Section */}
       <div className="p-6 border-t border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5 space-y-4">
         
-        {/* Recommendation banner above chat input */}
         {recommendation && (
           <div className={`p-3 rounded-xl border flex items-center gap-3 animate-in slide-in-from-bottom-4 duration-500 ${
             recommendation.priority === 'high' ? 'bg-blue-500/10 border-blue-500/20 text-blue-500' : 'bg-black/5 border-black/5'
@@ -255,9 +296,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </form>
 
         <div className="flex justify-between items-center px-2">
-          {/* Action Row Reordered: Theme -> Admin -> Settings -> Rollback */}
           <div className="flex items-center gap-4">
-            {/* 1. Theme Toggle Button (Sun/Moon) */}
             <button onClick={onToggleTheme} className="p-1.5 opacity-40 hover:opacity-100 transition-all hover:text-blue-500" title="Switch Theme">
               {theme === 'dark' ? (
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
@@ -266,27 +305,24 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               )}
             </button>
 
-            {/* 2. Admin Button (User Circle) - Universal account control icon */}
             <button 
               onClick={() => onViewChange('admin')} 
-              className={`p-1.5 transition-all ${currentView === 'admin' ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'} hover:text-red-500`}
-              title="Admin Control Plane"
+              className={`p-1.5 transition-all ${currentView === 'admin' ? 'text-blue-500 opacity-100 scale-110' : 'opacity-40 hover:opacity-100'} hover:text-blue-500`}
+              title="Universal Admin Control"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
             
-            {/* 3. Settings Button (Gear) - directly to the right of the admin button */}
             <button 
               onClick={() => onViewChange('settings')} 
-              className={`p-1.5 transition-all ${currentView === 'settings' ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'}`}
+              className={`p-1.5 transition-all ${currentView === 'settings' ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'} hover:text-blue-500`}
               title="Studio Settings"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             </button>
 
-            {/* 4. Rollback Button (Circular Arrow) */}
             <button 
               onClick={() => setShowHistoryPopup(!showHistoryPopup)} 
               className={`p-1.5 transition-all hover:text-blue-500 ${showHistoryPopup ? 'text-blue-500 opacity-100' : 'opacity-40 hover:opacity-100'}`}

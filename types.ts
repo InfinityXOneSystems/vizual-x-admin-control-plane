@@ -4,7 +4,24 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  actionId?: string; 
+  actionId?: string;
+  media?: MediaItem;
+  thinking?: string;
+  sources?: { title: string; url: string }[];
+}
+
+export interface MediaItem {
+  type: 'image' | 'video' | 'audio';
+  url: string;
+  mimeType?: string;
+}
+
+export interface PromptTemplate {
+  id: string;
+  title: string;
+  category: string;
+  content: string;
+  icon: string;
 }
 
 export interface FileData {
@@ -16,7 +33,6 @@ export interface FileData {
 
 export type AppView = 'chat' | 'settings' | 'admin';
 export type Theme = 'light' | 'dark';
-export type EditMode = 'full' | 'low' | 'no';
 export type ActionStatus = 'perfect' | 'warning' | 'critical';
 
 export interface ProjectAction {
@@ -27,10 +43,27 @@ export interface ProjectAction {
   filesSnapshot: FileData[];
   status: ActionStatus;
   isLocked: boolean;
-  lintingReport?: string;
-  codeSnippet?: string; // For the sandbox card
+  codeSnippet?: string;
   fixSuggestion?: string;
   enhancementSuggestion?: string;
+}
+
+export interface CloudRunService {
+  id: string;
+  name: string;
+  status: 'READY' | 'DEPLOYING' | 'FAILED';
+  traffic: number;
+  location: string;
+  lastDeployed: Date;
+  type: 'core' | 'ingestion' | 'scraper' | 'media' | 'trading' | 'builder';
+}
+
+export interface DockerContainer {
+  id: string;
+  name: string;
+  image: string;
+  status: 'running' | 'exited' | 'restarting';
+  ports: string;
 }
 
 export interface Connector {
@@ -67,9 +100,11 @@ export interface AdminMetrics {
   memoryUsage: number;
   apiLatency: number;
   activeDeployments: number;
+  globalTraffic: number;
+  serverlessExecutionCount: number;
 }
 
-// Added GitCommit interface to resolve build error in GitPanel.tsx where it was being imported but not exported here
+// Added GitCommit interface to fix missing export error in GitPanel.tsx
 export interface GitCommit {
   id: string;
   message: string;
