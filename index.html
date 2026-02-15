@@ -3,85 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vizual X | Core</title>
+    <title>Vizual X | Sovereign Assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #000000;
             --text-color: #ffffff;
-            --electric-blue-hex: #0066ff;
+            --electric-blue: #0066ff;
             --electric-blue-light: #00d4ff;
-            --electric-gradient: linear-gradient(135deg, var(--electric-blue-hex) 0%, var(--electric-blue-light) 100%);
+            --neon-green: #39FF14;
+            --neon-yellow: #FFFF00;
+            --neon-red: #FF3131;
             --glass-bg: rgba(10, 10, 10, 0.6);
             --glass-border: rgba(255, 255, 255, 0.08);
+            --font-size-base: 15px;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Inter', sans-serif;
+            font-size: var(--font-size-base);
             overflow: hidden;
             margin: 0;
+            -webkit-font-smoothing: antialiased;
         }
 
         .font-mono-code {
             font-family: 'Fira Code', monospace;
+            font-size: 0.95em;
         }
 
+        /* Glassmorphic System */
         .glass-panel {
             background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(50px) saturate(200%);
+            -webkit-backdrop-filter: blur(50px) saturate(200%);
             border: 1px solid var(--glass-border);
+            transition: border 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(57, 255, 20, 0.2);
+            box-shadow: 0 0 30px rgba(57, 255, 20, 0.05);
+        }
+
+        /* Neon Accent System */
+        .electric-text { color: var(--electric-blue-light); }
+        .neon-green-text { 
+            color: var(--neon-green); 
+            text-shadow: 0 0 12px rgba(57, 255, 20, 0.6); 
+            font-weight: 800;
+        }
+        .neon-yellow-text { color: var(--neon-yellow); text-shadow: 0 0 12px rgba(255, 255, 0, 0.5); font-weight: 800; }
+        .neon-red-text { color: var(--neon-red); text-shadow: 0 0 12px rgba(255, 49, 49, 0.5); font-weight: 800; }
+
+        .neon-border-green { 
+            border: 1px solid var(--neon-green); 
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.25); 
+        }
+
+        .neon-bg-green {
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid var(--neon-green);
+        }
+
+        /* Hover Highlighting */
+        .hover-neon:hover {
+            background: rgba(57, 255, 20, 0.05);
+            border-color: var(--neon-green);
+            transform: translateY(-2px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .hover-electric:hover {
+            background: rgba(0, 102, 255, 0.1);
+            border-color: var(--electric-blue-light);
+            transition: all 0.2s ease;
         }
 
         .electric-gradient {
-            background: var(--electric-gradient);
+            background: linear-gradient(135deg, var(--electric-blue) 0%, var(--electric-blue-light) 100%);
         }
 
-        .electric-text {
-            color: var(--electric-blue-light);
+        .neon-green-gradient {
+            background: linear-gradient(135deg, #1DB954 0%, var(--neon-green) 100%);
         }
 
-        .electric-border {
-            border-color: var(--electric-blue-hex);
-        }
-
-        .electric-glow {
-            box-shadow: 0 0 20px rgba(0, 102, 255, 0.4);
-        }
-
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        /* Layout & Scrolling */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--electric-blue-hex);
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
+
+        /* Animation */
+        @keyframes ticker {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-ticker {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 30s linear infinite;
         }
 
-        input, textarea {
-            background: transparent;
-            outline: none;
+        .monaco-style-input {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
         }
 
-        .animate-electric-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .monaco-style-input:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: .7; transform: scale(1.05); }
+        /* Message Bubbles */
+        .assistant-message {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
+        
+        .user-message {
+            background: linear-gradient(135deg, rgba(57, 255, 20, 0.15) 0%, rgba(57, 255, 20, 0.05) 100%);
+            border: 1px solid rgba(57, 255, 20, 0.3);
+            box-shadow: 0 4px 20px rgba(57, 255, 20, 0.1);
+        }
+
+        .shadow-glow-green { box-shadow: 0 0 25px rgba(57, 255, 20, 0.3); }
+        .shadow-glow-blue { box-shadow: 0 0 25px rgba(0, 102, 255, 0.3); }
     </style>
 <script type="importmap">
 {
@@ -94,7 +153,7 @@
 }
 </script>
 </head>
-<body class="dark">
-    <div id="root"></div>
+<body class="dark overflow-hidden h-screen w-screen">
+    <div id="root" class="h-full w-full"></div>
 </body>
 </html>

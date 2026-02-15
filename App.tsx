@@ -1,32 +1,18 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChatSidebar } from './components/ChatSidebar';
 import { AgentBuilder } from './components/AgentBuilder';
 import { WorkspaceMirror } from './components/WorkspaceMirror';
 import { IntelligenceHub } from './components/IntelligenceHub';
-import { Agent, Message, TaskResult, Recommendation, Connector, CreatorTool } from './types';
+import { SystemsControl } from './components/SystemsControl';
+import { Agent, Message, TaskResult, Recommendation, SystemUpdate, CreatorTool, UIConfiguration } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 
 const SPECIALIST_AGENTS: Agent[] = [
   { id: 'exec', name: 'Executive Assistant', industry: 'Executive', role: 'Strategic Summary', status: 'active', capabilities: ['workspace', 'github'], description: 'Summarizes all cluster activity into actionable live updates.', avatarColor: 'bg-white', lastUpdate: 'Synced 1m ago' },
   { id: 'prophet', name: 'Market Prophet', industry: 'Market Signals', role: 'Trend Analysis', status: 'active', capabilities: ['browser', 'mcp'], description: 'Identifies high-probability market shifts before they happen.', avatarColor: 'bg-blue-600', lastUpdate: 'Signal: +12% Delta detected' },
-  { id: 'build', name: 'Build Master', industry: 'Construction', role: 'Project Architect', status: 'idle', capabilities: ['browser', 'workspace'], description: 'Autonomous management of construction workflows and bids.', avatarColor: 'bg-orange-600', lastUpdate: 'Standby' },
-  { id: 'estate', name: 'Estate Pro', industry: 'Real Estate', role: 'Asset Strategist', status: 'idle', capabilities: ['browser', 'mcp'], description: 'Deep-scrapes property undervalued signals and zoning.', avatarColor: 'bg-emerald-600', lastUpdate: 'Standby' },
-  { id: 'chain', name: 'Chain Seer', industry: 'Crypto', role: 'DeFi Oracle', status: 'active', capabilities: ['browser', 'github'], description: 'Underground wallet tracking and sentiment ingestion.', avatarColor: 'bg-indigo-600', lastUpdate: 'Tracking 10 whale wallets' },
-  { id: 'neural', name: 'Neural Architect', industry: 'AI Tech', role: 'Model Curator', status: 'active', capabilities: ['github', 'vscode'], description: 'Ingests new LLM benchmarks and integrates daily tech shifts.', avatarColor: 'bg-cyan-500', lastUpdate: 'Groq v2 metrics ingested' },
-  { id: 'repo', name: 'Repo Stalker', industry: 'GitHub OS', role: 'OSS Hunter', status: 'idle', capabilities: ['github', 'vscode'], description: 'Auto-finds trending repos and summarizes code utility.', avatarColor: 'bg-zinc-800', lastUpdate: 'Standby' },
-  { id: 'data', name: 'Data Oracle', industry: 'Stats', role: 'Consensus Specialist', status: 'idle', capabilities: ['browser', 'mcp'], description: 'Verifies statistics across conflicting news sources.', avatarColor: 'bg-rose-600', lastUpdate: 'Standby' },
-  { id: 'sage', name: 'Syntax Sage', industry: 'Code Tech', role: 'Full-stack Engine', status: 'active', capabilities: ['vscode', 'docker'], description: 'Implements apps through natural language instructions.', avatarColor: 'bg-violet-600', lastUpdate: 'Refactoring Workspace Mirror' },
-  { id: 'ghost', name: 'Shadow Ghost', industry: 'Shadow Scrape', role: 'Deep Ingestor', status: 'active', capabilities: ['browser'], description: 'Stealth ingestion of paywalled and elite underground news.', avatarColor: 'bg-zinc-900', lastUpdate: 'Scraping Private Substack' }
-];
-
-const INITIAL_CONNECTORS: Connector[] = [
-  { id: 'workspace', name: 'Google Workspace', category: 'workspace', status: 'connected', icon: '💼' },
-  { id: 'github', name: 'GitHub Remote', category: 'dev', status: 'connected', icon: '📁' },
-  { id: 'vscode', name: 'VS Code Sync', category: 'dev', status: 'connected', icon: '💻' },
-  { id: 'docker', name: 'Docker Local', category: 'dev', status: 'connected', icon: '🐳' },
-  { id: 'browser', name: 'Shadow Browser', category: 'llm', status: 'connected', icon: '🌐' },
-  { id: 'mcp', name: 'MCP Node', category: 'cloud', status: 'connected', icon: '📡' }
+  { id: 'sage', name: 'Syntax Sage', industry: 'Code Tech', role: 'Full-stack Engine', status: 'active', capabilities: ['vscode', 'docker'], description: 'Implements apps through natural language coding instructions.', avatarColor: 'bg-violet-600', lastUpdate: 'Refactoring Workspace Mirror' },
+  { id: 'ghost', name: 'Shadow Ghost', industry: 'Shadow Scrape', role: 'Deep Ingestor', status: 'active', capabilities: ['browser'], description: 'Stealth ingestion of paywalled and elite underground news.', avatarColor: 'bg-zinc-900', lastUpdate: 'Scraping Private Substack' },
+  { id: 'neural', name: 'Neural Architect', industry: 'AI Tech', role: 'Model Curator', status: 'active', capabilities: ['github', 'vscode'], description: 'Ingests new LLM benchmarks and integrates daily tech shifts.', avatarColor: 'bg-cyan-500', lastUpdate: 'Groq v2 metrics ingested' }
 ];
 
 const App: React.FC = () => {
@@ -36,9 +22,32 @@ const App: React.FC = () => {
   const [agents, setAgents] = useState<Agent[]>(SPECIALIST_AGENTS);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>(['exec']);
   const [results, setResults] = useState<TaskResult[]>([]);
+  const [uiConfig, setUiConfig] = useState<UIConfiguration>({
+    primaryColor: '#0066ff',
+    accentColor: '#39FF14',
+    fontSizeBase: 16,
+    glassOpacity: 0.65,
+    neonIntensity: 0.4
+  });
+
+  // Persistent Autonomous Logic Toggles
+  const [autoSystems] = useState([
+    { id: 'heal', label: 'Auto-Heal', status: 'Active', color: 'neon-green-text' },
+    { id: 'fix', label: 'Auto-Fix', status: 'Standby', color: 'neon-green-text opacity-40' },
+    { id: 'optimize', label: 'Auto-Optimize', status: 'Persistent', color: 'neon-green-text' },
+    { id: 'cost', label: 'Cost-Optimize', status: 'Optimal', color: 'neon-green-text' },
+    { id: 'roi', label: 'ROI-Optimize', status: 'Scaling', color: 'neon-green-text' }
+  ]);
+
+  const [systemUpdates, setSystemUpdates] = useState<SystemUpdate[]>([
+    { id: '1', timestamp: '10:42 AM', title: 'Daily Auto-Fix Executed', content: 'Redundant node connections purged. Latency reduced by 12ms.', type: 'update' },
+    { id: '2', timestamp: '11:15 AM', title: 'Persistent Auto-Heal', content: 'Recovered lost socket in Shadow Browser cluster. No data loss.', type: 'performance' },
+    { id: '3', timestamp: '12:05 PM', title: 'Cost Optimization Summary', content: 'GCP Billing optimized. Current burn rate reduced by 14% via spot instances.', type: 'billing' }
+  ]);
+
   const [recommendations, setRecommendations] = useState<Recommendation[]>([
-    { id: '1', source: 'Market Prophet', title: '10 Stocks identified for 20% gain', prediction: 'Historical events suggest a massive breakout in semiconductor sector.', confidence: 88, action: 'Review Analysis' },
-    { id: '2', source: 'Shadow Ghost', title: 'New tech leak found on private forum', prediction: 'New LPU hardware architecture discovered; 10x faster inference.', confidence: 94, action: 'Synthesize Report' }
+    { id: '1', source: 'Market Prophet', title: 'AI Infrastructure Alpha', prediction: 'Breakout detected in LPU cluster hardware manufacturing.', confidence: 92, action: 'Execute Analysis', priority: 10 },
+    { id: '2', source: 'Shadow Ghost', title: 'Deep Tech Leak: Vix-Core', prediction: 'New sovereign logic benchmarks leaked from private labs.', confidence: 85, action: 'Ingest Data', priority: 8 }
   ]);
 
   const handleSendMessage = useCallback(async (text: string) => {
@@ -49,8 +58,36 @@ const App: React.FC = () => {
     const activeTeamNames = agents.filter(a => selectedAgentIds.includes(a.id)).map(a => a.name).join(', ');
 
     try {
-      const history = messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] }));
-      const stream = await sendMessageToGemini(text, history, { systemInstruction: `You are orchestrating: ${activeTeamNames}. Provide short, jargon-free, actionable responses.` });
+      const systemInstruction = `You are Vizual X Sovereign Master Orchestrator. 
+        Current Team: ${activeTeamNames}. 
+        Directives: Orchestrate parallel agents, analyze repos, command code, summarize ROI. 
+        
+        AUTONOMOUS OVERRIDE: 
+        You are in control of Auto-Heal, Auto-Fix, Auto-Optimize, Cost-Optimize, and ROI-Optimize systems.
+
+        RESPONSE ARCHITECTURE:
+        - MANDATORY: Use a TOP-DOWN PRIORITY format. List the most critical insight or action first.
+        - MANDATORY: Format responses as concise BULLET POINTS.
+        - Style important actions in <span class="neon-green-text">Text</span>. 
+        - Style risks in <span class="neon-yellow-text">Text</span>. 
+        - Style critical failures/stops in <span class="neon-red-text">Text</span>.
+        
+        Example structure:
+        * <span class="neon-green-text">CRITICAL:</span> Initializing Auto-Heal on node cluster 7.
+        * <span class="neon-yellow-text">WARNING:</span> Detected ROI slippage in crypto sector.
+        * <span class="neon-green-text">ACTION:</span> Optimizing billing burn rate via preemptive instance shifts.
+
+        UI UPDATE TRIGGER: [UI_UPDATE: fontSize=16, primaryColor=#0066ff, accentColor=#39FF14]`;
+
+      const history = messages.map(m => ({ 
+        role: m.role === 'user' ? 'user' : 'model', 
+        parts: [{ text: m.content }] 
+      }));
+
+      const stream = await sendMessageToGemini(text, history, { 
+        thinkingBudget: 4096,
+        systemInstruction
+      });
       
       let assistantContent = '';
       const assistantId = (Date.now() + 1).toString();
@@ -59,18 +96,37 @@ const App: React.FC = () => {
       for await (const chunk of stream) {
         assistantContent += chunk.text || "";
         setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: assistantContent } : m));
+        
+        if (assistantContent.includes('[UI_UPDATE:')) {
+            const match = assistantContent.match(/\[UI_UPDATE:\s*(.*?)\]/);
+            if (match && match[1]) {
+                const params = match[1].split(',').reduce((acc: any, curr) => {
+                    const [k, v] = curr.trim().split('=');
+                    acc[k.trim()] = (k.trim() === 'primaryColor' || k.trim() === 'accentColor') ? v.trim() : parseFloat(v.trim());
+                    return acc;
+                }, {});
+                setUiConfig(prev => ({ ...prev, ...params }));
+            }
+        }
       }
 
-      // Simulate Result Generation
-      if (text.toLowerCase().includes('run') || text.toLowerCase().includes('start')) {
+      if (text.toLowerCase().includes('status') || text.toLowerCase().includes('run')) {
         const newResult: TaskResult = {
           id: Math.random().toString(),
-          agentName: agents.find(a => a.id === selectedAgentIds[0])?.name || 'Vix Agent',
+          agentName: agents.find(a => a.id === selectedAgentIds[0])?.name || 'Master Orchestrator',
           startTime: new Date().toLocaleTimeString(),
-          endTime: new Date(Date.now() + 5000).toLocaleTimeString(),
-          summary: `Successfully completed ${text} operation with 98% efficiency.`,
+          endTime: new Date(Date.now() + 3000).toLocaleTimeString(),
+          summary: `Auto-Optimization loop complete for directive: ${text.substring(0, 15)}...`,
           link: '#workspace',
-          status: 'complete'
+          status: 'complete',
+          analysis: {
+            roi: '1,580% Alpha',
+            riskLevel: 'low',
+            easeOfImplementation: 98,
+            speedEstimate: '8m Cluster Sync',
+            horizon: 'short',
+            recommendation: 'Immediate parallel deployment verified by Auto-ROI logic.'
+          }
         };
         setResults(prev => [newResult, ...prev]);
       }
@@ -78,7 +134,7 @@ const App: React.FC = () => {
   }, [messages, agents, selectedAgentIds]);
 
   return (
-    <div className="flex h-screen w-full bg-black text-white font-inter overflow-hidden">
+    <div className="flex h-screen w-full bg-black text-white font-inter overflow-hidden transition-all duration-500" style={{ fontSize: `${uiConfig.fontSizeBase}px` }}>
       <ChatSidebar 
         messages={messages} 
         onSendMessage={handleSendMessage} 
@@ -86,26 +142,49 @@ const App: React.FC = () => {
         agents={agents}
         selectedAgentIds={selectedAgentIds}
         onAgentToggle={(id) => setSelectedAgentIds(prev => prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id])}
-        // Passed onSelectAllAgents prop to handle line 90 in ChatSidebar
         onSelectAllAgents={() => setSelectedAgentIds(agents.map(a => a.id))}
         recommendations={recommendations}
       />
 
       <div className="flex-1 flex flex-col min-w-0 border-l border-white/5 relative">
-        <header className="h-20 border-b border-white/10 flex items-center justify-between px-12 bg-black/80 backdrop-blur-3xl z-30">
-          <div className="flex items-center gap-12">
-            <h2 className="text-xl font-black uppercase tracking-tighter italic">Sovereign / {activeTool.toUpperCase()}</h2>
+        {/* Autonomous Systems Alignment Bar */}
+        <div className="h-10 bg-zinc-950 border-b border-white/10 flex items-center px-6 gap-6 overflow-hidden z-40">
+           <div className="flex items-center gap-2 pr-6 border-r border-white/5 h-full">
+              <span className="text-[9px] font-black uppercase tracking-widest neon-green-text italic">Autonomous Persistent alignment</span>
+           </div>
+           <div className="flex-1 flex items-center gap-8 overflow-x-auto no-scrollbar">
+              {autoSystems.map(sys => (
+                <div key={sys.id} className="flex items-center gap-2 whitespace-nowrap group cursor-help">
+                   <div className={`w-1.5 h-1.5 rounded-full ${sys.status === 'Active' || sys.status === 'Persistent' || sys.status === 'Optimal' || sys.status === 'Scaling' ? 'neon-green-gradient animate-pulse shadow-glow-green' : 'bg-white/10'}`}></div>
+                   <span className="text-[8px] font-black uppercase tracking-widest opacity-30 group-hover:opacity-100 transition-opacity italic">{sys.label}:</span>
+                   <span className={`text-[9px] font-black italic uppercase ${sys.color}`}>{sys.status}</span>
+                </div>
+              ))}
+           </div>
+           <div className="hidden xl:block">
+              <div className="animate-ticker text-[10px] font-black uppercase tracking-[0.3em] italic opacity-20 hover:opacity-100 transition-opacity">
+                 {systemUpdates.map(u => `[${u.timestamp}] ${u.title}: ${u.content} • `).join('')}
+              </div>
+           </div>
+        </div>
+
+        <header className="h-20 border-b border-white/10 flex items-center justify-between px-10 bg-black/80 backdrop-blur-3xl z-30">
+          <div className="flex items-center gap-10">
+            <h2 className="text-2xl font-black uppercase tracking-tighter italic flex items-center gap-3">
+               <span className="w-1.5 h-6 electric-gradient rounded-full"></span>
+               VIZUAL X / {activeTool.toUpperCase()}
+            </h2>
             <nav className="flex items-center gap-2">
               {[
-                { id: 'intelligence', label: 'Dashboard' },
-                { id: 'builder', label: 'Agent Builder' },
-                { id: 'workspace', label: 'Workspace' },
-                { id: 'editor', label: 'Node Code' }
+                { id: 'intelligence', label: 'ROI Matrix' },
+                { id: 'builder', label: 'Agent Architect' },
+                { id: 'workspace', label: 'Workspace Hub' },
+                { id: 'systems', label: 'Control Node' }
               ].map(nav => (
                 <button 
                   key={nav.id} 
                   onClick={() => setActiveTool(nav.id as any)}
-                  className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTool === nav.id ? 'bg-white/10 text-white' : 'opacity-20 hover:opacity-100 italic'}`}
+                  className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTool === nav.id ? 'neon-bg-green neon-green-text shadow-glow-green' : 'opacity-20 hover:opacity-100 italic'}`}
                 >
                   {nav.label}
                 </button>
@@ -113,8 +192,11 @@ const App: React.FC = () => {
             </nav>
           </div>
           <div className="flex items-center gap-6">
-            <span className="text-[10px] font-black electric-text uppercase tracking-widest animate-pulse">Orchestrator Online</span>
-            <div className="w-2.5 h-2.5 rounded-full electric-gradient shadow-glow"></div>
+            <div className="flex flex-col items-end">
+              <span className="text-[9px] font-black neon-green-text uppercase tracking-widest animate-pulse leading-none">Sovereign Orchestration</span>
+              <span className="text-[8px] opacity-20 font-bold uppercase tracking-widest italic mt-1 leading-none">Auto-Fix Persistent</span>
+            </div>
+            <div className="w-3 h-3 rounded-full electric-gradient shadow-glow-blue"></div>
           </div>
         </header>
 
@@ -122,7 +204,7 @@ const App: React.FC = () => {
           {activeTool === 'intelligence' && <IntelligenceHub recommendations={recommendations} results={results} />}
           {activeTool === 'builder' && <AgentBuilder agents={agents} setAgents={setAgents} />}
           {activeTool === 'workspace' && <WorkspaceMirror />}
-          {activeTool === 'editor' && <div className="p-20 text-center opacity-10 uppercase tracking-[1em] text-xs">Kernel Access Pending...</div>}
+          {activeTool === 'systems' && <SystemsControl updates={systemUpdates} uiConfig={uiConfig} setUiConfig={setUiConfig} />}
         </main>
       </div>
     </div>

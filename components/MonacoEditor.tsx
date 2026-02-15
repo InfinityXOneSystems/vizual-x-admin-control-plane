@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FileData, Theme } from '../types';
 
@@ -27,20 +26,20 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-black h-full animate-in fade-in duration-700 p-16 overflow-hidden">
-      <div className="flex-1 bg-white/[0.03] border border-white/10 rounded-[40px] shadow-4xl flex flex-col overflow-hidden backdrop-blur-3xl">
-        <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-white/[0.02]">
-          <div className="flex items-center gap-4">
-            <div className="w-2.5 h-2.5 rounded-full electric-gradient shadow-[0_0_12px_rgba(0,102,255,0.8)] animate-pulse"></div>
-            <span className="text-[12px] font-mono-code text-white/90 tracking-tight font-bold italic">{activeFile.name}</span>
+    <div className="flex-1 flex flex-col bg-black h-full animate-in fade-in duration-700 p-10 overflow-hidden">
+      <div className="flex-1 glass-panel rounded-[40px] shadow-4xl flex flex-col overflow-hidden">
+        <div className="h-16 border-b border-white/5 flex items-center justify-between px-10 bg-white/[0.01]">
+          <div className="flex items-center gap-5">
+            <div className="w-3 h-3 rounded-full neon-green-gradient shadow-glow-green animate-pulse"></div>
+            <span className="text-[15px] font-mono-code text-white font-black italic tracking-tight">{activeFile.name}</span>
           </div>
           <div className="flex items-center gap-6">
-             <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-20 italic">{activeFile.language} Unit</span>
+             <span className="text-[11px] font-black uppercase tracking-[0.4em] neon-green-text italic">{activeFile.language} NODE</span>
           </div>
         </div>
 
-        <div className="flex-1 flex font-mono-code text-[14px] leading-relaxed overflow-hidden relative">
-          <div className="w-14 border-r border-white/5 flex flex-col items-center py-10 text-[11px] opacity-10 select-none z-10 bg-transparent font-bold">
+        <div className="flex-1 flex font-mono-code text-[15px] leading-relaxed overflow-hidden relative">
+          <div className="w-16 border-r border-white/5 flex flex-col items-center py-10 text-[11px] opacity-10 select-none z-10 bg-transparent font-black">
             {activeFile.content.split('\n').map((_, idx) => (
               <span key={idx} className="block leading-[1.8rem]">{idx + 1}</span>
             ))}
@@ -51,8 +50,8 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
                   value={activeFile.content}
                   onChange={(e) => onContentChange && onContentChange(e.target.value)}
                   spellCheck={false}
-                  className="absolute inset-0 w-full h-full py-10 px-10 bg-transparent text-transparent caret-blue-500 outline-none resize-none font-mono-code z-20 overflow-auto whitespace-pre custom-scrollbar font-medium"
-                  style={{ lineHeight: '1.8rem', caretColor: 'var(--electric-blue-light)' }}
+                  className="absolute inset-0 w-full h-full py-10 px-10 bg-transparent text-transparent caret-green-500 outline-none resize-none font-mono-code z-20 overflow-auto whitespace-pre custom-scrollbar font-bold"
+                  style={{ lineHeight: '1.8rem', caretColor: '#39FF14' }}
               />
               
               <div className="absolute inset-0 w-full h-full py-10 px-10 pointer-events-none z-10 overflow-hidden whitespace-pre font-mono-code">
@@ -63,12 +62,12 @@ export const MonacoEditor: React.FC<MonacoEditorProps> = ({
           </div>
         </div>
 
-        <footer className="h-12 bg-white/[0.02] flex items-center justify-between px-10 text-[10px] font-black uppercase tracking-[0.4em] electric-text opacity-50 border-t border-white/5 italic">
-          <div className="flex gap-10">
-            <span>{activeFile.language} Cluster</span>
-            <span>UTF-8 Sovereign</span>
+        <footer className="h-14 bg-white/[0.02] flex items-center justify-between px-10 text-[11px] font-black uppercase tracking-[0.4em] neon-green-text border-t border-white/5 italic">
+          <div className="flex gap-12">
+            <span>{activeFile.language} Cluster Synchronized</span>
+            <span>Sovereign UTF-8</span>
           </div>
-          <span>{lastSaved ? `Synced @ ${lastSaved.toLocaleTimeString()}` : 'Kernel Runtime Persistent'}</span>
+          <span>{lastSaved ? `Alignment @ ${lastSaved.toLocaleTimeString()}` : 'Kernel Core Persistent'}</span>
         </footer>
       </div>
     </div>
@@ -79,10 +78,10 @@ function highlightCode(code: string, language: string) {
   if (!code) return null;
   return code.split('\n').map((line, i) => {
     let highlighted = line
-      .replace(/\b(const|let|var|function|return|if|else|for|while|import|export|from|await|async|try|catch|class|interface|type|extends|default|switch|case)\b/g, '<span style="color: #00d4ff">$1</span>')
-      .replace(/\b(true|false|null|undefined)\b/g, '<span style="color: #569cd6">$1</span>')
+      .replace(/\b(const|let|var|function|return|if|else|for|while|import|export|from|await|async|try|catch|class|interface|type|extends|default|switch|case)\b/g, '<span style="color: #39FF14">$1</span>')
+      .replace(/\b(true|false|null|undefined)\b/g, '<span style="color: #00d4ff">$1</span>')
       .replace(/(".*?"|'.*?'|`.*?`)/g, '<span style="color: #ce9178">$1</span>')
-      .replace(/\/\/.*/g, '<span style="color: #6a9955">$&</span>');
+      .replace(/\/\/.*/g, '<span style="color: #6a9955; opacity: 0.4 italic">$&</span>');
     return <span key={i} className="block min-h-[1.8rem]" dangerouslySetInnerHTML={{ __html: highlighted || ' ' }} />;
   });
 }

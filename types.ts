@@ -1,9 +1,19 @@
+export type Theme = 'light' | 'dark';
 
 export interface MediaItem {
   type: 'image' | 'video' | 'audio';
   url: string;
   data?: string;
   mimeType?: string;
+}
+
+export interface ROIAnalysis {
+  roi: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  easeOfImplementation: number; // 1-100
+  speedEstimate: string;
+  horizon: 'short' | 'mid' | 'long';
+  recommendation: string;
 }
 
 export interface TaskResult {
@@ -14,6 +24,7 @@ export interface TaskResult {
   summary: string;
   link: string;
   status: 'complete' | 'active' | 'scheduled';
+  analysis?: ROIAnalysis;
 }
 
 export interface Recommendation {
@@ -23,6 +34,15 @@ export interface Recommendation {
   prediction: string;
   confidence: number;
   action: string;
+  priority: number; // 1-10
+}
+
+export interface SystemUpdate {
+  id: string;
+  timestamp: string;
+  title: string;
+  content: string;
+  type: 'update' | 'billing' | 'performance' | 'security';
 }
 
 export interface Message {
@@ -50,13 +70,15 @@ export interface Agent {
   recentResult?: TaskResult;
 }
 
-export interface Connector {
-  id: string;
-  name: string;
-  category: 'workspace' | 'dev' | 'cloud' | 'llm';
-  status: 'connected' | 'disconnected';
-  icon: string;
+export interface UIConfiguration {
+  primaryColor: string;
+  accentColor: string;
+  fontSizeBase: number;
+  glassOpacity: number;
+  neonIntensity: number;
 }
+
+export type CreatorTool = 'editor' | 'builder' | 'workspace' | 'intelligence' | 'systems' | 'ui' | 'video' | 'image' | 'music' | 'business' | 'browser';
 
 export interface FileData {
   id: string;
@@ -65,8 +87,31 @@ export interface FileData {
   content: string;
 }
 
-// Added missing CreatorTool variants and export missing interfaces
-export type CreatorTool = 'editor' | 'builder' | 'workspace' | 'intelligence' | 'ui' | 'video' | 'image' | 'music' | 'business' | 'browser';
+export interface AppSettings {
+  theme: Theme;
+  userName: string;
+  connectors: any[];
+  aiModel: string;
+  ui: UIConfiguration;
+}
+
+export interface Connector {
+  id: string;
+  name: string;
+  category: string;
+  status: 'connected' | 'disconnected';
+  icon: string;
+  details: string;
+  lastSynced: Date;
+}
+
+export interface GitCommit {
+  id: string;
+  message: string;
+  author: string;
+  timestamp: string | Date;
+  files: string[];
+}
 
 export interface PromptTemplate {
   id: string;
@@ -74,21 +119,4 @@ export interface PromptTemplate {
   category: string;
   icon: string;
   content: string;
-}
-
-export interface GitCommit {
-  id: string;
-  message: string;
-  timestamp: Date | string | number;
-  author: string;
-  files: string[];
-}
-
-export type Theme = 'light' | 'dark';
-
-export interface AppSettings {
-  theme: Theme;
-  userName: string;
-  connectors: Connector[];
-  aiModel: string;
 }
