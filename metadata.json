@@ -1,6 +1,6 @@
 {
-  "name": "Vizual-X-Admin",
-  "description": "A developer-focused AI assistant with a glassmorphic sidebar and a Monaco-style code viewer, powered by Gemini 3 Flash.",
+  "name": "Vizual-X-Sovereign",
+  "description": "Autonomous flagship AI workspace for complex logic, UI architecting, and multi-modal media creation.",
   "requestFramePermissions": [
     "camera",
     "microphone",
