@@ -78,7 +78,7 @@ export interface UIConfiguration {
   neonIntensity: number;
 }
 
-export type CreatorTool = 'editor' | 'builder' | 'workspace' | 'intelligence' | 'systems' | 'ui' | 'video' | 'image' | 'music' | 'business' | 'browser' | 'vault';
+export type CreatorTool = 'editor' | 'builder' | 'workspace' | 'intelligence' | 'systems' | 'ui' | 'video' | 'image' | 'music' | 'business' | 'browser' | 'vault' | 'admin';
 
 export interface FileData {
   id: string;
@@ -119,4 +119,25 @@ export interface PromptTemplate {
   category: string;
   icon: string;
   content: string;
+}
+
+export interface MCPState {
+  connected: boolean;
+  activeAgents: number;
+  syncStatus: 'idle' | 'syncing' | 'error';
+  lastSync: Date;
+}
+
+export interface Subsystem {
+  name: string;
+  repo: string;
+  status: 'active' | 'inactive' | 'error';
+  type: 'backend' | 'frontend' | 'orchestrator' | 'agent';
+}
+
+export interface SystemManifest {
+  name: string;
+  mode: string;
+  environment: string;
+  subsystems: Subsystem[];
 }

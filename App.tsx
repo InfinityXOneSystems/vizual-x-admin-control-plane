@@ -6,6 +6,7 @@ import { IntelligenceHub } from './components/IntelligenceHub';
 import { SystemsControl } from './components/SystemsControl';
 import { RightToolbar } from './components/RightToolbar';
 import { VaultXPage } from './components/VaultXPage';
+import { AdminControlPlane } from './components/AdminControlPlane';
 import { Agent, Message, TaskResult, Recommendation, SystemUpdate, CreatorTool, UIConfiguration } from './types';
 import { sendMessageToGemini } from './services/geminiService';
 
@@ -168,7 +169,8 @@ const App: React.FC = () => {
                 { id: 'intelligence', label: 'Dashboard' },
                 { id: 'workspace', label: 'Workspace' },
                 { id: 'vault', label: 'Vault X' },
-                { id: 'systems', label: 'Control' }
+                { id: 'systems', label: 'Control' },
+                { id: 'admin', label: 'Admin' }
               ].map(nav => (
                 <button 
                   key={nav.id} 
@@ -211,6 +213,7 @@ const App: React.FC = () => {
             {activeTool === 'workspace' && <WorkspaceMirror />}
             {activeTool === 'vault' && <VaultXPage />}
             {activeTool === 'systems' && <SystemsControl updates={systemUpdates} uiConfig={uiConfig} setUiConfig={setUiConfig} />}
+            {activeTool === 'admin' && <AdminControlPlane />}
           </div>
 
           {/* Right Toolbar */}
