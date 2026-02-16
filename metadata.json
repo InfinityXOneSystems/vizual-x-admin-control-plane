@@ -1,0 +1,9 @@
+{
+  "name": "Vizual X",
+  "description": "Autonomous flagship AI workspace for complex logic, UI architecting, and multi-modal media creation.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

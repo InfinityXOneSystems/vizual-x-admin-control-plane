@@ -1,0 +1,32 @@
+
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - vix-network
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/db.json:/usr/src/app/db.json
+    environment:
+      - NODE_ENV=production
+    networks:
+      - vix-network
+
+networks:
+  vix-network:
+    driver: bridge

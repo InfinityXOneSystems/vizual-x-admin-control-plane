@@ -1,0 +1,95 @@
+Access and Setup
+
+I confirmed that the Vizual X Admin Control Plane repository is publicly accessible. For example, its README explicitly shows it is an AI Studio app with instructions to run locally. We can therefore proceed to use this system as the foundation for the admin control plane.
+
+Google AI Studio System Prompt
+
+The core of the setup is the Vizual X – Master Compiler Prompt which is intended to be pasted directly into Google AI Studio as the PRIMARY SYSTEM PROMPT. This prompt instructs the AI to act as a “Frontend Architect, Backend Systems Engineer, AI Orchestration Engineer, and Product Compiler” and to generate a complete production-grade system with zero manual iteration. Key non-negotiable requirements from the prompt include:
+
+Raw Code Only: Output a single monorepo with complete file tree and full content for every file, with no placeholders or “TODOs”.
+
+Built-in Quality: The system must include all testing (unit + E2E), linting, type-checks, CI/CD, security headers, audit logs, rate limits, health/performance monitoring, seed data, and self-check endpoints.
+
+First-Shot Correctness: The first output must be fully correct; no partial iteration is allowed.
+
+In short, we feed this comprehensive system prompt to Google AI Studio, which will then “compile intent → contract → system → validation → deployment” automatically.
+
+Core System Architecture
+
+According to the prompt, Vizual X is a chat-first, outcome-driven builder for complete applications. It replaces traditional frontend builders, backend scaffolding, template systems, CI/CD glue, infra scripts, admin dashboards, agent builders, etc., with one coherent system. Key design mandates include a “reverse-Apple” dark UI (black background, minimal accents, no visual noise) and a chat-based interface with a fixed left sidebar (new chat, search, tools, projects, settings) and a right-hand chat workspace.
+
+The system must support three automation modes: FULL AUTO (fully autonomous multi-agent execution), HYBRID (agents with guardrails requiring approval for destructive/high-risk actions), and MANUAL (suggest-only). Automation actually controls permissions, tool access, routing decisions, deployment authority, and vault access, not just UI toggles.
+
+Outcome Contracts and Templates
+
+Every feature or “outcome” in the system is contract-first: before generating code, Vizual X must produce an “Outcome Contract Pack” that includes functional/non-functional requirements, data models/migrations, OpenAPI specs, UI routes/state, auth/RBAC design, test plans, observability plans, deployment/rollback plans, etc. – and no development proceeds without this contract. A complete MVC (Monorepo with Versioned Contracts) approach is enforced: the system must generate all documentation, contracts, pipelines, UI, and backend logic without comments, just raw code.
+
+The Template Genome Engine (code-named Helix) drives all templates. Templates must be parametric, composable, upgradeable without overwriting custom code, and support diff-mergeability. They include scoring for performance, security, accessibility, and maintainability.
+
+Connectors and Integrations
+
+The system must integrate with all required external tools and platforms via connectors. In particular, it lists mandatory connectors for:
+
+Version Control: GitHub integration, with persistent sync and multi-account support.
+
+Cloud Services: Google Cloud and Google Workspace. This covers services like Cloud Run, BigQuery, Cloud SQL, AutoML, etc., as indicated in the “Smart Router” sync targets.
+
+Local Development: VS Code (via Multi-Cloud Platform API or extension), Docker (local containers), and any existing local tunnels/gateways. The system prefers local resources when available and routes seamlessly to cloud otherwise (via the Atlas Smart Router).
+
+AI Services: Integration adapters for Google Gen AI App and Vertex AI. The system should auto-refresh model catalogs, support per-project/model selection, cost-aware routing, safety filters, and streaming outputs.
+
+Agent Orchestration: “Manus-style” AI agent orchestration is explicitly required (e.g. implementing parallel multi-agent workflows). Key AI tools include chat, voice/video creation, UI generation, research visualization, CRUD schema builders, and a no-code agent builder.
+
+All connectors must be user-friendly, supporting click-to-sign-in OAuth flows, multiple accounts, and permission scopes with full audit logging. For example, Vault-X (the secrets vault) will securely store API keys/tokens (UI never re-displays them) and enable scoped access with audit trails.
+
+Security, Governance, and Monitoring
+
+Security is built-in from the start. The vault (Vault-X) holds secrets and even a paper-trading portfolio, with rules so that the UI never re-displays secrets and only scoped backend handles can use them. All actions through connectors and agents are logged (full audit logs). Guardrails in hybrid mode require approvals for dangerous operations. Every project adheres to an enterprise-grade security posture and execution guarantees of deterministic, contract-first pipelines with zero iteration bias.
+
+A built-in health and performance dashboard (Sentinel and Flux) continuously monitors all components – frontend, backend, storage, queues, connectors, and models – with green/yellow/red status indicators and AI-driven auto-fix recommendations. Performance metrics (web vitals, latency, bundle size, cache efficiency) are tracked and one-click fixes can be applied (with validation).
+
+Deployment and Automation
+
+The system includes a fully automated CI/CD pipeline. It uses GitHub Actions for builds/testing, supports dev/stage/prod and preview environments, rollbacks, canary deployments, and even cost-estimation and “evidence packs” for audits. Cron jobs, GitHub workflows, projects, and agents are all orchestrated by Vizual X as part of the Pulse MAPP engine for parallel execution.
+
+Required Tech Stack
+
+Per the prompt, the frontend is Next.js (App Router) with TypeScript and tokenized Tailwind (dark theme) for a PWA. The backend is Node.js/TypeScript with a SQL adapter (SQLite→Postgres) and job queue layer. Everything runs in Docker containers with CSP/security headers. Full local & cloud debug tooling (e.g. VS Code extension, local loggers) should be included.
+
+Generated Documentation and Handoff
+
+The prompt’s “FAANG-level Handoff Pack” specifies many deliverables. The AI must generate precise, implementation-aligned documents such as:
+
+ARCHITECTURE.md – overall system design
+
+FRONTEND_SYSTEM.md and BACKEND_SYSTEM.md – tech details of each
+
+AI_ORCHESTRATION.md and AUTOMATION_MODES.md – how agents and modes work
+
+OUTCOME_COMPILER.md – contract/outcome logic
+
+TEMPLATE_GENOME.md – template engine design
+
+TOOLS_SDK.md – list and usage of built-in tools
+
+SMART_ROUTER.md – connector routing logic
+
+VAULT_SECURITY.md – secrets management
+
+CONNECTORS.md – details on GitHub/Cloud/VSCode/Docker integration
+
+HEALTH_MONITORING.md and PERFORMANCE_AUTOMATION.md – ops monitoring and auto-remediation
+
+DEPLOYMENT_PIPELINE.md – CI/CD and environment strategy
+
+RUNBOOK.md – daily operation and incident response
+
+SECURITY.md – security policies and compliance details
+
+Each document is minimal but fully specific to the implementation.
+
+Execution Guarantees
+
+All code and docs must be generated deterministically and correctly on the first try. No manual tweaks or missing steps are allowed. The AI-generated system will follow the exact standards of GitHub (including Actions, Workflows, Projects, and Actions Agents) and Google (Vertex AI, Cloud Run, etc.) to ensure compliance with those platforms.
+
+Summary: Feed the Vizual X Master Compiler Prompt from [4] into Google AI Studio. This instructs the AI to scaffold a fully integrated admin system using manus.im-style AI orchestration plus connectors for GitHub, Google Cloud/Workspace, VS Code, Docker, Cloudflare, etc. It will produce raw, production-ready code, documentation, pipelines, and governance controls for everything mentioned. All aspects (auth, CI/CD, observability, guardrails, taxonomy, templates, memory) are covered by the prompt’s requirements (as cited above), ensuring a 24/7 autonomous enterprise system

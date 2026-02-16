@@ -1,0 +1,455 @@
+Quantum-X-Builder
+
+Your GCP Serverless Flagship Architecture
+
+Local-first Docker mirroring
+
+Shadow headless ingestion
+
+Multi-agent coding team
+
+Smart router (local → cloud failover)
+
+TAP hardening
+
+Vizual-X admin “development / invisible” toggle
+
+This is an architectural specification.
+
+PART I — SYSTEM TRUTH (ONE SYSTEM, TWO RUNTIMES)
+
+You are not building two systems.
+
+You are building one system with two execution substrates:
+
+LOGICAL SYSTEM: Quantum-X-Builder (QXB)
+EXECUTION SUBSTRATES:
+  • Local Docker Mesh (primary)
+  • GCP Cloud Run Mesh (fallback / scale-out)
+
+
+Everything must be isomorphic between these two.
+
+That is the core rule.
+
+PART II — CANONICAL ARCHITECTURE (MATCHES YOUR GCP DESIGN)
+
+Your provided Autonomous Chat Application Flagship System is correct.
+
+We will mirror it 1:1 locally.
+
+Canonical Service Map (Authoritative)
+Logical Role	Local (Docker)	Cloud (GCP)
+Global Entry	Local Smart Router	Global Load Balancer
+Frontend	vizual-x (container)	frontend-service (Cloud Run)
+Core Backend	backend-service	backend-backend-service
+Builder	builder-service	builder-service
+Media Gen	media-service	media-generation-service
+Trading	trading-sim	trading-simulation-service
+Ingestion	ingestion-service	ingestion-ingestion-service
+Async Scraper	async-scraper	async-scraper-service
+Parallel	parallel-worker	parallel-processing-service
+AI	Ollama / Groq	Vertex AI / Gemini
+Storage	Local volumes / MinIO	GCS / BigQuery / Cloud SQL
+
+Key principle:
+
+Local Docker containers MUST expose the same APIs, contracts, and schemas as Cloud Run services.
+
+PART III — MULTI-AGENT CODING TEAM (CORE OF QXB)
+
+This is not one “AI coder.”
+It is a team with enforced separation of concerns.
+
+Agent Taxonomy (Locked)
+CODING SWARM
+├── Architect Agent
+│   └── defines structure, contracts, interfaces
+├── Implementation Agents (N)
+│   └── write code in sandboxes
+├── Refactor Agent
+│   └── improves existing code
+├── Test Agent
+│   └── generates tests
+├── Security Agent
+│   └── scans for vulns
+├── Performance Agent
+│   └── load & stress analysis
+├── Validator Agent (TAP)
+│   └── blocks violations
+└── Shadow Operator
+    └── prepares actions, never impersonates
+
+
+No agent can:
+
+commit directly to main
+
+access secrets
+
+bypass router decisions
+
+PART IV — MULTI-SANDBOX DOCKER MODEL (CRITICAL)
+
+You explicitly asked for multiple sandboxes.
+Here is the correct split.
+
+Sandbox Classes
+1️⃣ Code Sandbox (Sandbox-A)
+
+Purpose: coding only
+
+Rules:
+
+Read-only repo mount
+
+Write only to /workspace/output
+
+No outbound internet (except model endpoints)
+
+No credentials
+
+2️⃣ Data / Scraper Sandbox (Sandbox-B)
+
+Purpose: ingestion & scraping
+
+Rules:
+
+Internet allowed
+
+No repo access
+
+Output only to ingestion queue / object store
+
+Disposable containers
+
+3️⃣ Shadow Browser Sandbox
+
+Purpose: observation, not impersonation
+
+Rules:
+
+Headless browser
+
+No persistent cookies
+
+No account login automation
+
+Used to:
+
+extract DOM
+
+capture flows
+
+record form structure
+
+simulate actions without submission
+
+This is how you avoid bans while still “operating in shadow.”
+
+PART V — SHADOW INGESTION PIPELINE (ASYNC, PARALLEL)
+Pipeline Stages (Mandatory)
+RAW → PARSED → NORMALIZED → ENRICHED → INDEXED
+
+RAW
+
+HTML
+
+Screenshots
+
+PDFs
+
+Network captures
+
+PARSED
+
+DOM extraction
+
+Text segmentation
+
+Metadata tagging
+
+NORMALIZED
+
+Canonical schemas
+
+Deduplication
+
+Source fingerprinting
+
+ENRICHED
+
+Keywords
+
+Entities
+
+Topics
+
+Intent classification
+
+INDEXED
+
+Search index
+
+Vector store
+
+Analytics DB
+
+This pipeline exists both locally and in GCP.
+
+PART VI — SMART ROUTER (LOCAL-FIRST, CLOUD FAILOVER)
+
+This is one of your most important requirements.
+
+Router Responsibilities
+
+The router decides:
+
+Local vs Cloud
+
+Which model (Ollama / Groq / Gemini / Vertex)
+
+Which agent
+
+Which sandbox
+
+Retry & backoff
+
+Cost vs latency tradeoffs
+
+Routing Logic (Simplified)
+IF local healthy:
+  route → local Docker service
+ELSE:
+  route → Cloud Run equivalent
+
+
+Health is determined by:
+
+container heartbeat
+
+latency
+
+error rate
+
+resource pressure
+
+This router is stateless and auditable.
+
+PART VII — MODEL MESH (OLLAMA, GROQ, GEMINI, VERTEX)
+
+You are building a model fabric, not a single LLM dependency.
+
+Model Roles
+Model	Role
+Ollama	Local dev, fast iteration
+Groq	Low-latency reasoning
+Gemini	Planning, multimodal
+Vertex AI	Production, scale, media
+
+The router assigns tasks by capability, not preference.
+
+PART VIII — BACKUP & FORENSICS (NON-NEGOTIABLE)
+
+Every run must be:
+
+Reproducible
+
+Rollback-able
+
+Auditable
+
+Required Artifacts
+
+Docker image snapshots
+
+Volume snapshots
+
+Git tags per autonomous action
+
+_OPS/OUTPUT/*.json forensic records
+
+This is already aligned with what you’ve started.
+
+PART IX — THE FOUR SYSTEMS YOU ASKED FOR (FORMALIZED)
+OPTION 1 — Shadow Action Packet Spec (LOCK THIS)
+interface ShadowActionPacket {
+  id: string
+  source: "shadow_agent"
+  target: "code" | "seo" | "social" | "infra"
+  description: string
+  preparedArtifacts: string[]
+  requiresExecution: boolean
+  riskScore: number
+  platformPolicyRefs: string[]
+  executionPath: "api" | "human" | "blocked"
+  timestamp: number
+}
+
+
+No execution happens without a packet.
+
+OPTION 2 — Platform Execution Adapters
+
+Adapters are API-only:
+
+GitHub
+
+Google Workspace
+
+Social platforms
+
+Cloud providers
+
+Adapters:
+
+enforce rate limits
+
+log everything
+
+reject unsafe packets
+
+OPTION 3 — SEO Intelligence Scoring Engine
+
+Produces ranked actions, not spam.
+
+Output example:
+
+{
+  "keyword": "autonomous ai backend",
+  "difficulty": 0.42,
+  "contentGap": true,
+  "recommendedAction": "publish_long_form",
+  "priority": 0.91
+}
+
+OPTION 4 — Risk Engine (TAP-Aligned)
+
+Evaluates:
+
+platform ToS risk
+
+frequency risk
+
+impersonation risk
+
+footprint risk
+
+Blocks before damage.
+
+PART X — VIZUAL-X “DEVELOPMENT / INVISIBLE” TOGGLE
+
+This is smart and correct.
+
+Admin Setting (Authoritative)
+settings.mode = "development" | "production"
+settings.visibility = "visible" | "invisible"
+
+DEVELOPMENT / INVISIBLE
+
+Shadow actions only
+
+No public posting
+
+No SEO indexing
+
+Sandbox-only execution
+
+Full logging
+
+PRODUCTION / VISIBLE
+
+Execution adapters enabled
+
+Public APIs allowed
+
+SEO publishing allowed
+
+Monitoring + alerts
+
+This toggle must be checked by:
+
+Router
+
+Execution adapters
+
+Shadow agents
+
+No exceptions.
+
+PART XI — ROADMAP (REALISTIC, SEQUENTIAL)
+Phase 1
+
+Lock schemas
+
+Lock agent roles
+
+Lock router contracts
+
+Phase 2
+
+Docker mirror of all Cloud Run services
+
+Smart router local-first
+
+Phase 3
+
+Shadow ingestion pipeline
+
+SEO intelligence engine
+
+Phase 4
+
+Platform execution adapters
+
+Risk engine enforcement
+
+Phase 5
+
+Vizual-X admin controls
+
+Mode toggle
+
+Observability
+
+Phase 6
+
+Autonomous loops
+
+Self-healing
+
+Cost optimization
+
+FINAL TRUTH
+
+What you are building is not a bot.
+
+It is a distributed autonomous software factory + intelligence system that:
+
+codes itself
+
+observes the world
+
+prepares actions
+
+executes safely
+
+survives audits
+
+survives platforms
+
+scales globally
+
+If you want, next I can:
+
+Produce the local Docker compose that mirrors your entire GCP stack
+
+Write the router spec
+
+Write the agent runbooks
+
+Formalize the TAP policy layer
+
+Create the Vizual-X admin schema
+
+Tell me which artifact you want next and I’ll go deep.
