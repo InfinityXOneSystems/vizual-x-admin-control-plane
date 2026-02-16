@@ -30,3 +30,9 @@ vault specs/vault and copilot handoff.txt
 github specs/git config --username-and-pass.txt
 
 vault specs/vault and copilot handoff.txt
+
+*.json
+
+*.env
+
+*.txt
