@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vizual X | MONACO SUPREME</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/vizual-x-admin-control-plane/assets/manifest-BC_C55ls.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vizual X">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2103/2103633.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Inter:ital,wght@0,400;0,600;0,700;1,800&family=Inter+Tight:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-absolute: #000000;
+            --surface-primary: #05070A;
+            --surface-secondary: #0A0F14;
+            --electric-cyan: #2AF5FF;
+            --electric-blue: #1E90FF;
+            --deep-blue: #103A6B;
+            --navy-core: #0E1B2C;
+            --text-primary: #C8D2DC;
+            --text-muted: #7C8B9C;
+            --metallic-gradient: linear-gradient(180deg, #BFC5CD, #E5EAF0, #BFC5CD);
+            --border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        body.light-mode {
+            --bg-absolute: #FFFFFF;
+            --surface-primary: #F5F7FA;
+            --surface-secondary: #E1E4E8;
+            --text-primary: #0A0F14;
+            --text-muted: #4A5568;
+            --border-color: rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            background-color: var(--bg-absolute);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.02em;
+            margin: 0;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .monaco-frame {
+            border: 0.5px solid transparent;
+            background: linear-gradient(var(--surface-primary), var(--surface-primary)) padding-box,
+                        var(--metallic-gradient) border-box;
+            border-radius: 16px;
+        }
+
+        .metallic-border-card {
+            border: 0.5px solid transparent;
+            background: 
+                linear-gradient(rgba(5, 7, 10, 0.7), rgba(5, 7, 10, 0.7)) padding-box,
+                var(--metallic-gradient) border-box;
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+        }
+
+        .electric-gradient {
+            background: radial-gradient(circle at 40% 30%, #2AF5FF 0%, #00C2FF 20%, #1E90FF 40%, #103A6B 65%, #0E1B2C 100%);
+        }
+
+        .futuristic-btn {
+            position: relative;
+            border: 0.5px solid transparent;
+            background: 
+                linear-gradient(135deg, var(--electric-blue) 0%, var(--deep-blue) 100%) padding-box,
+                var(--metallic-gradient) border-box;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 180ms cubic-bezier(.4,0,.2,1);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .futuristic-btn:hover {
+            filter: brightness(1.25);
+            transform: translateY(-1px);
+        }
+
+        .futuristic-btn:active {
+            transform: translateY(0);
+            filter: brightness(0.9);
+        }
+
+        .futuristic-btn:disabled {
+            opacity: 0.3;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+        
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 0.9; }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .active-glow { animation: subtle-pulse 2s infinite ease-in-out; }
+
+        .hamburger-line {
+            height: 1.5px;
+            width: 20px;
+            background: var(--text-primary);
+            transition: all 0.3s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* Standard Brightness Utility Classes */
+        .text-standard { color: var(--text-primary); opacity: 1 !important; }
+        .bg-standard { background-color: var(--surface-primary); }
+        .border-standard { border-color: var(--border-color); }
+    </style>
+
+<link rel="stylesheet" href="/index.css">
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "monaco-editor": "https://esm.sh/monaco-editor@0.45.0",
+    "lowdb": "https://esm.sh/lowdb@^7.0.1",
+    "lowdb/": "https://esm.sh/lowdb@^7.0.1/",
+    "express": "https://esm.sh/express@^5.2.1",
+    "cors": "https://esm.sh/cors@^2.8.6",
+    "vitest/": "https://esm.sh/vitest@^4.0.18/",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "@playwright/test": "https://esm.sh/@playwright/test@^1.58.2",
+    "@testing-library/jest-dom": "https://esm.sh/@testing-library/jest-dom@^6.9.1",
+    "vitest": "https://esm.sh/vitest@^4.0.18",
+    "@testing-library/react": "https://esm.sh/@testing-library/react@^16.3.2"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/vizual-x-admin-control-plane/assets/index-DDPrtloN.js"></script>
+  <link rel="stylesheet" crossorigin href="/vizual-x-admin-control-plane/assets/index-FmH7-gyM.css">
+</head>
+<body class="selection:bg-blue-500/30">
+    <div id="root" class="h-screen w-screen"></div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((registration) => {
+                    console.log('[VIX PWA] Service Worker Registered:', registration.scope);
+                }).catch((err) => {
+                    console.log('[VIX PWA] Service Worker Registration Failed:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
