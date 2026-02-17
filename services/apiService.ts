@@ -1,5 +1,5 @@
 
-import { User, ApiToken, FeatureFlag, TestResult, UIConfiguration } from '../types';
+import { User, ApiToken, FeatureFlag, TestResult, UIConfiguration, RefactorRequest, RefactorResult, GodModeStatus } from '../types';
 
 /**
  * VIZUAL-X BACKEND CORE
@@ -11,7 +11,8 @@ const STORAGE_KEYS = {
   TOKENS: 'vix_tokens',
   FLAGS: 'vix_flags',
   TESTS: 'vix_tests',
-  CONFIG: 'vix_config'
+  CONFIG: 'vix_config',
+  GOD_MODE: 'vix_god_mode'
 };
 
 const get = <T>(key: string, def: T): T => {
@@ -86,6 +87,46 @@ export const ApiService = {
         { id: 't3', suite: 'E2E Flow', test: 'Natural Language Refactor', status: 'pass', duration: 1200 },
         { id: 't4', suite: 'Security', test: 'RBAC Enforcement', status: 'pass', duration: 5 }
       ]);
+    }
+  },
+
+  // GOD MODE / REFACTOR PROTOCOL
+  refactor: {
+    audit: async (target: string): Promise<RefactorResult> => {
+      // Simulate API call - in production would call backend /api/refactor/audit
+      return {
+        action: 'audit_completed',
+        target: target,
+        compliance_score: '75/100',
+        status: 'NEEDS_REFACTOR',
+        audit_log: ['Missing CONTRIBUTING.md', 'Code formatting needed'],
+        changes_applied: []
+      };
+    },
+    execute: async (request: RefactorRequest): Promise<RefactorResult> => {
+      // Simulate API call - in production would call backend /api/refactor/execute
+      const result: RefactorResult = {
+        action: 'refactor_executed',
+        target: request.target,
+        changes_applied: ['Created CONTRIBUTING.md', 'Formatted code with Prettier', 'Added missing tests'],
+        pr_url: `https://github.com/InfinityXOneSystems/${request.target}/pull/auto-refactor-${Date.now()}`
+      };
+      
+      // Update God Mode stats
+      const status = await ApiService.refactor.getStatus();
+      status.totalRefactors += 1;
+      status.lastRun = new Date();
+      save(STORAGE_KEYS.GOD_MODE, status);
+      
+      return result;
+    },
+    getStatus: async (): Promise<GodModeStatus> => {
+      return get(STORAGE_KEYS.GOD_MODE, {
+        enabled: true,
+        totalRefactors: 0,
+        successRate: 100,
+        lastRun: undefined
+      });
     }
   }
 };

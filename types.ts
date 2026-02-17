@@ -167,3 +167,25 @@ export interface FeatureFlag {
   description: string;
   enabled: boolean;
 }
+
+export interface RefactorRequest {
+  target: string;
+  params?: Record<string, any>;
+}
+
+export interface RefactorResult {
+  action: string;
+  target: string;
+  changes_applied: string[];
+  pr_url?: string;
+  compliance_score?: string;
+  status?: string;
+  audit_log?: string[];
+}
+
+export interface GodModeStatus {
+  enabled: boolean;
+  lastRun?: Date;
+  totalRefactors: number;
+  successRate: number;
+}
