@@ -244,7 +244,7 @@ jobs:
           mv audit-*.md "$audit_dir/" 2>/dev/null || true
           
           # Create summary
-          cat > "$audit_dir/summary.md" << 'EOF'
+          cat > "$audit_dir/summary.md" << EOF
           # Vizual-X GitHub Forensic Audit Summary
           Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           Repository: ${{ github.repository }}
