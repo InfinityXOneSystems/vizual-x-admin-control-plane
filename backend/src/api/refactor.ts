@@ -23,10 +23,10 @@ router.post('/audit', async (req, res) => {
 
         res.json(response.data);
     } catch (error) {
-        console.error('[REFACTOR API] Audit failed:', error);
+        console.error('[REFACTOR API] Audit failed');
         res.status(500).json({ 
             error: 'Failed to audit repository',
-            details: error instanceof Error ? error.message : 'Unknown error'
+            details: 'Please check that the Python bridge is running and accessible'
         });
     }
 });
@@ -48,10 +48,10 @@ router.post('/execute', async (req, res) => {
 
         res.json(response.data);
     } catch (error) {
-        console.error('[REFACTOR API] God Mode execution failed:', error);
+        console.error('[REFACTOR API] God Mode execution failed');
         res.status(500).json({ 
             error: 'Failed to execute God Mode refactor',
-            details: error instanceof Error ? error.message : 'Unknown error'
+            details: 'Please check that the Python bridge is running and accessible'
         });
     }
 });
@@ -66,10 +66,11 @@ router.get('/status', async (req, res) => {
             loadedPlugins: response.data.loaded_plugins
         });
     } catch (error) {
-        console.error('[REFACTOR API] Status check failed:', error);
+        console.error('[REFACTOR API] Status check failed');
         res.status(503).json({ 
             enabled: false,
-            error: 'Python bridge unavailable'
+            error: 'Python bridge unavailable',
+            details: 'The Python bridge service is not responding'
         });
     }
 });

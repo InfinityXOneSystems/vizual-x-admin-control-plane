@@ -110,7 +110,7 @@ export const ApiService = {
         action: 'refactor_executed',
         target: request.target,
         changes_applied: ['Created CONTRIBUTING.md', 'Formatted code with Prettier', 'Added missing tests'],
-        pr_url: `https://github.com/InfinityXOneSystems/${request.target}/pull/auto-refactor-${Date.now()}`
+        pr_url: `https://github.com/${request.target}/pull/auto-refactor-${Date.now()}`
       };
       
       // Update God Mode stats

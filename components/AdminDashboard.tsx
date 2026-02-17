@@ -37,30 +37,70 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
     setFlags(prev => prev.map(f => f.id === id ? updated! : f));
   };
 
+  const validateRepositoryFormat = (target: string): boolean => {
+    // Validate format: owner/repository
+    const repoRegex = /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+$/;
+    return repoRegex.test(target);
+  };
+
   const handleAuditRepo = async () => {
-    if (!refactorTarget.trim()) return;
+    const trimmedTarget = refactorTarget.trim();
+    if (!trimmedTarget || !validateRepositoryFormat(trimmedTarget)) {
+      setRefactorResult({
+        action: 'validation_failed',
+        target: trimmedTarget,
+        changes_applied: [],
+        status: 'ERROR',
+        audit_log: ['Invalid repository format. Expected: owner/repository']
+      });
+      return;
+    }
     setIsRefactoring(true);
     setRefactorResult(null);
     try {
-      const result = await ApiService.refactor.audit(refactorTarget);
+      const result = await ApiService.refactor.audit(trimmedTarget);
       setRefactorResult(result);
     } catch (error) {
       console.error('Audit failed:', error);
+      setRefactorResult({
+        action: 'audit_failed',
+        target: trimmedTarget,
+        changes_applied: [],
+        status: 'ERROR',
+        audit_log: ['Audit failed: ' + (error instanceof Error ? error.message : 'Unknown error')]
+      });
     } finally {
       setIsRefactoring(false);
     }
   };
 
   const handleExecuteGodMode = async () => {
-    if (!refactorTarget.trim()) return;
+    const trimmedTarget = refactorTarget.trim();
+    if (!trimmedTarget || !validateRepositoryFormat(trimmedTarget)) {
+      setRefactorResult({
+        action: 'validation_failed',
+        target: trimmedTarget,
+        changes_applied: [],
+        status: 'ERROR',
+        audit_log: ['Invalid repository format. Expected: owner/repository']
+      });
+      return;
+    }
     setIsRefactoring(true);
     try {
-      const result = await ApiService.refactor.execute({ target: refactorTarget });
+      const result = await ApiService.refactor.execute({ target: trimmedTarget });
       setRefactorResult(result);
       const updatedStatus = await ApiService.refactor.getStatus();
       setGodModeStatus(updatedStatus);
     } catch (error) {
       console.error('God Mode execution failed:', error);
+      setRefactorResult({
+        action: 'execution_failed',
+        target: trimmedTarget,
+        changes_applied: [],
+        status: 'ERROR',
+        audit_log: ['Execution failed: ' + (error instanceof Error ? error.message : 'Unknown error')]
+      });
     } finally {
       setIsRefactoring(false);
     }
