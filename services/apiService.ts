@@ -1,9 +1,11 @@
 
 import { User, ApiToken, FeatureFlag, TestResult, UIConfiguration } from '../types';
+import { authService } from './authService';
 
 /**
  * VIZUAL-X BACKEND CORE
  * Deterministic API Layer with Persistence
+ * Enhanced with authentication support
  */
 
 const STORAGE_KEYS = {
@@ -23,7 +25,36 @@ const save = <T>(key: string, data: T) => {
   localStorage.setItem(key, JSON.stringify(data));
 };
 
+/**
+ * Get authentication headers for API requests
+ */
+const getAuthHeaders = (): Record<string, string> => {
+  const token = authService.getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+/**
+ * Check if request requires authentication
+ */
+const requiresAuth = (): boolean => {
+  return !authService.isAuthenticated();
+};
+
+/**
+ * Handle 401 Unauthorized responses
+ */
+const handleUnauthorized = () => {
+  authService.logout();
+  window.location.href = '/login';
+};
+
 export const ApiService = {
+  // AUTH UTILITIES
+  auth: {
+    getHeaders: getAuthHeaders,
+    requiresAuth,
+    handleUnauthorized
+  },
   // USER MANAGEMENT
   users: {
     list: async (): Promise<User[]> => {
