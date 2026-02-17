@@ -7,10 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
 *.local
+build/
+out/
 
 # Editor directories and files
 .vscode/*
@@ -23,16 +28,40 @@ dist-ssr
 *.sln
 *.sw?
 
-github specs/git config --username-and-pass.txt
-
-vault specs/vault and copilot handoff.txt
-
-github specs/git config --username-and-pass.txt
-
-vault specs/vault and copilot handoff.txt
-
-*.json
-
+# Environment variables
 *.env
+.env.local
+.env.*.local
 
-*.txt
+# Sensitive credential files
+github specs/git config --username-and-pass.txt
+vault specs/vault and copilot handoff.txt
+**/git config --username-and-pass.txt
+**/vault and copilot handoff.txt
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large binary files (if any)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Allow essential config files (do NOT ignore these)
+!package.json
+!package-lock.json
+!tsconfig.json
+!vite.config.ts
+!manifest.json
+!metadata.json
+!docker-compose.yml
