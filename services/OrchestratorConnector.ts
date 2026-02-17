@@ -15,7 +15,7 @@ export const OrchestratorConnector = {
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await axios.get(\\/\);
+      const response = await axios.get(`${ORCHESTRATOR_API_URL}/`);
       return response.data.status === 'online';
     } catch (error) {
       console.error('Orchestrator is offline:', error);
@@ -31,7 +31,7 @@ export const OrchestratorConnector = {
    */
   async executeCommand(action: string, target?: string, params: object = {}): Promise<CommandResponse> {
     try {
-      const response = await axios.post(\\/execute\, {
+      const response = await axios.post(`${ORCHESTRATOR_API_URL}/execute`, {
         action,
         target,
         params
