@@ -18,3 +18,19 @@ View your app in AI Studio: https://ai.studio/apps/drive/1oiktXBWh0yMNn1NxXLcFb_
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## CI/CD Pipeline
+
+The project includes a preflight CI workflow that runs on every push and pull request:
+- Type checking with TypeScript
+- Build verification
+- Automated dependency updates via Dependabot (weekly)
+
+See [`.github/workflows/preflight.yml`](.github/workflows/preflight.yml) for details.
+
+## Security
+
+Security scanning and vulnerability management procedures are documented in [SECURITY_PRECHECK.md](SECURITY_PRECHECK.md). This includes:
+- NPM audit procedures
+- Container scanning with Trivy
+- Response procedures for security findings
