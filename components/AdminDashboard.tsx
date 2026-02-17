@@ -1,109 +1,135 @@
 
 import React, { useState, useEffect } from 'react';
 import { ApiService } from '../services/apiService';
-import { User, ApiToken, FeatureFlag, GodModeStatus, RefactorResult } from '../types';
+import { User, ApiToken, FeatureFlag, FileData } from '../types';
+import { MonacoEditor } from './MonacoEditor';
+
+const SIGNUP_BACKEND_CODE = `
+import { Router } from 'express';
+import { db } from '../db';
+import { User } from '../../../types';
+
+const router = Router();
+
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password are required.' });
+
+    await db.read();
+    const user = db.data.users.find(u => u.email === email);
+    if (!user || user.password !== password) return res.status(401).json({ success: false, message: 'Invalid operator credentials.' });
+
+    res.json({ success: true, message: 'Authentication successful.' });
+});
+
+router.post('/signup', async (req, res) => {
+    const { email, password, promoCode } = req.body;
+    if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password are required.' });
+
+    await db.read();
+    if (db.data.users.find(u => u.email === email)) return res.status(409).json({ success: false, message: 'Operator email already exists.' });
+
+    const newUser: User = {
+        id: (db.data.users.length + 1).toString(),
+        name: email.split('@')[0],
+        email,
+        password, // In a real app, hash this!
+        role: 'operator',
+        status: 'active',
+        lastActive: new Date().toISOString(),
+        accessLevel: 'full',
+    };
+
+    if (promoCode) {
+        const code = db.data.promoCodes.find(c => c.code === promoCode && c.usesLeft > 0 && new Date(c.expiresAt) > new Date());
+        if (!code) return res.status(400).json({ success: false, message: 'Invalid or expired promo code.' });
+        
+        code.usesLeft--;
+        newUser.promoCodeDetails = { id: code.id, code: code.code, type: code.type };
+
+        if (code.type === 'timed_access') {
+            newUser.accessLevel = 'trial';
+            newUser.trialExpiresAt = new Date(Date.now() + code.value * 24 * 60 * 60 * 1000).toISOString();
+        }
+    }
+
+    db.data.users.push(newUser);
+    await db.write();
+    res.status(201).json({ success: true, message: 'Account created successfully.' });
+});
+
+router.post('/demo', async (req, res) => {
+    await db.read();
+    const demoUser = db.data.users.find(u => u.accessLevel === 'demo');
+    if (!demoUser) return res.status(500).json({ success: false, message: 'Demo environment not configured.' });
+    // This is a simplified "login" for demo mode.
+    res.json({ success: true, message: 'Demo access granted.' });
+});
+
+router.post('/request-reset', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required.' });
+
+    await db.read();
+    const userExists = db.data.users.some(u => u.email === email);
+    
+    // Simulate email sending logic
+    console.log(\`[AUTH] Password reset requested for: \${email}. User exists: \${userExists}\`);
+    
+    // For security, always return a generic success message to prevent email enumeration.
+    res.json({ success: true, message: 'If an account with that email exists, a reset link has been sent.' });
+});
+
+export default router;
+`.trim();
+
+const authCodeFile: FileData = {
+  id: 'backend-auth-code',
+  name: 'backend/src/api/auth.ts',
+  language: 'typescript',
+  content: SIGNUP_BACKEND_CODE
+};
 
 export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ fullView, load }) => {
-  const [activeTab, setActiveTab] = useState<'users' | 'tokens' | 'flags' | 'health' | 'godmode'>('health');
+  const [activeTab, setActiveTab] = useState<'users' | 'tokens' | 'flags' | 'health' | 'code'>('health');
   const [users, setUsers] = useState<User[]>([]);
   const [tokens, setTokens] = useState<ApiToken[]>([]);
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [godModeStatus, setGodModeStatus] = useState<GodModeStatus | null>(null);
-  const [refactorTarget, setRefactorTarget] = useState('');
-  const [refactorResult, setRefactorResult] = useState<RefactorResult | null>(null);
-  const [isRefactoring, setIsRefactoring] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [togglingFlagId, setTogglingFlagId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [u, t, f, gm] = await Promise.all([
-        ApiService.users.list(),
-        ApiService.tokens.list(),
-        ApiService.flags.list(),
-        ApiService.refactor.getStatus()
-      ]);
-      setUsers(u);
-      setTokens(t);
-      setFlags(f);
-      setGodModeStatus(gm);
-      setLoading(false);
+      try {
+        const [u, t, f] = await Promise.all([
+          ApiService.users.list(),
+          ApiService.tokens.list(),
+          ApiService.flags.list()
+        ]);
+        setUsers(u);
+        setTokens(t);
+        setFlags(f);
+      } catch (error) {
+        console.error("Failed to fetch admin data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
 
   const handleToggleFlag = async (id: string) => {
-    const updated = await ApiService.flags.toggle(id);
-    setFlags(prev => prev.map(f => f.id === id ? updated! : f));
-  };
-
-  const validateRepositoryFormat = (target: string): boolean => {
-    // Validate format: owner/repository
-    // Repository names must start with alphanumeric or underscore, can contain dots/dashes after
-    const repoRegex = /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_][a-zA-Z0-9_.-]*$/;
-    return repoRegex.test(target);
-  };
-
-  const handleAuditRepo = async () => {
-    const trimmedTarget = refactorTarget.trim();
-    if (!trimmedTarget || !validateRepositoryFormat(trimmedTarget)) {
-      setRefactorResult({
-        action: 'validation_failed',
-        target: trimmedTarget,
-        changes_applied: [],
-        status: 'ERROR',
-        audit_log: ['Invalid repository format. Expected: owner/repository']
-      });
-      return;
-    }
-    setIsRefactoring(true);
-    setRefactorResult(null);
+    setTogglingFlagId(id);
     try {
-      const result = await ApiService.refactor.audit(trimmedTarget);
-      setRefactorResult(result);
+      const updated = await ApiService.flags.toggle(id);
+      if (updated) {
+        setFlags(prev => prev.map(f => f.id === id ? updated : f));
+      }
     } catch (error) {
-      console.error('Audit failed:', error);
-      setRefactorResult({
-        action: 'audit_failed',
-        target: trimmedTarget,
-        changes_applied: [],
-        status: 'ERROR',
-        audit_log: ['Audit failed: ' + (error instanceof Error ? error.message : 'Unknown error')]
-      });
+      console.error("Failed to toggle flag", error);
     } finally {
-      setIsRefactoring(false);
-    }
-  };
-
-  const handleExecuteGodMode = async () => {
-    const trimmedTarget = refactorTarget.trim();
-    if (!trimmedTarget || !validateRepositoryFormat(trimmedTarget)) {
-      setRefactorResult({
-        action: 'validation_failed',
-        target: trimmedTarget,
-        changes_applied: [],
-        status: 'ERROR',
-        audit_log: ['Invalid repository format. Expected: owner/repository']
-      });
-      return;
-    }
-    setIsRefactoring(true);
-    try {
-      const result = await ApiService.refactor.execute({ target: trimmedTarget });
-      setRefactorResult(result);
-      const updatedStatus = await ApiService.refactor.getStatus();
-      setGodModeStatus(updatedStatus);
-    } catch (error) {
-      console.error('God Mode execution failed:', error);
-      setRefactorResult({
-        action: 'execution_failed',
-        target: trimmedTarget,
-        changes_applied: [],
-        status: 'ERROR',
-        audit_log: ['Execution failed: ' + (error instanceof Error ? error.message : 'Unknown error')]
-      });
-    } finally {
-      setIsRefactoring(false);
+      setTogglingFlagId(null);
     }
   };
 
@@ -114,6 +140,14 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
     { label: 'Cluster Health', value: '100%', trend: 'Steady', color: 'text-green-500' }
   ];
 
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full bg-[#000000] p-8 lg:p-12 overflow-y-auto custom-scrollbar animate-in fade-in duration-700">
       <div className="max-w-7xl mx-auto space-y-12">
@@ -123,7 +157,7 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
             <p className="text-[11px] font-bold uppercase tracking-[0.6em] opacity-30 text-blue-400 mt-2 italic">Sovereign Governance Center</p>
           </div>
           <nav className="flex bg-[#05070A] p-1 rounded-2xl border border-white/10 shrink-0">
-            {['health', 'users', 'tokens', 'flags', 'godmode'].map(tab => (
+            {['health', 'users', 'tokens', 'flags', 'code'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
@@ -131,7 +165,7 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
                   activeTab === tab ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                {tab === 'godmode' ? '⚡ God Mode' : tab}
+                {tab === 'code' ? 'Code Viewer' : tab}
               </button>
             ))}
           </nav>
@@ -198,7 +232,7 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
                       <td className="py-6">
                         <span className="text-[9px] font-black uppercase tracking-widest text-green-500">● {user.status}</span>
                       </td>
-                      <td className="py-6 text-[10px] font-mono opacity-30">{user.lastActive}</td>
+                      <td className="py-6 text-[10px] font-mono opacity-30">{new Date(user.lastActive).toLocaleString()}</td>
                       <td className="py-6 text-right pr-4">
                         <button className="text-[9px] font-black uppercase opacity-20 group-hover:opacity-100 hover:text-blue-400 transition-all">Edit Node</button>
                       </td>
@@ -219,12 +253,18 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
                     <h4 className="text-sm font-black italic uppercase tracking-widest">{flag.name}</h4>
                     <p className="text-[10px] opacity-30 mt-2 uppercase tracking-tighter leading-relaxed">{flag.description}</p>
                   </div>
-                  <button
-                    onClick={() => handleToggleFlag(flag.id)}
-                    className={`w-12 h-6 rounded-full border border-white/10 transition-all flex items-center px-1 ${flag.enabled ? 'bg-blue-600/20' : 'bg-zinc-900'}`}
-                  >
-                    <div className={`w-4 h-4 rounded-full transition-all ${flag.enabled ? 'bg-blue-400 translate-x-6' : 'bg-zinc-700 translate-x-0'}`}></div>
-                  </button>
+                   <div className="w-12 h-6 flex items-center justify-start">
+                    {togglingFlagId === flag.id ? (
+                      <div className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleFlag(flag.id)}
+                        className={`w-12 h-6 rounded-full border border-white/10 transition-all flex items-center px-1 ${flag.enabled ? 'bg-blue-600/20' : 'bg-zinc-900'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full transition-all ${flag.enabled ? 'bg-blue-400 translate-x-6' : 'bg-zinc-700 translate-x-0'}`}></div>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="pt-6 border-t border-white/[0.02] flex justify-between items-center text-[8px] font-black uppercase tracking-widest opacity-10">
                   <span>Scope: Global</span>
@@ -235,165 +275,18 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
           </div>
         )}
 
-        {activeTab === 'godmode' && (
-          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="p-12 bg-[#05070A] border border-blue-500/30 rounded-[40px] space-y-8 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.1),transparent)] opacity-50"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h3 className="text-3xl font-black italic uppercase tracking-tighter">⚡ God Mode</h3>
-                    <p className="text-[10px] uppercase tracking-[0.4em] opacity-30 mt-2 italic">Autonomous Refactor Protocol</p>
-                  </div>
-                  {godModeStatus && (
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-[9px] uppercase tracking-widest opacity-30">Status</p>
-                        <p className={`text-sm font-black italic ${godModeStatus.enabled ? 'text-green-400' : 'text-red-400'}`}>
-                          {godModeStatus.enabled ? '● ONLINE' : '● OFFLINE'}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] uppercase tracking-widest opacity-30">Total Refactors</p>
-                        <p className="text-sm font-black italic text-blue-400">{godModeStatus.totalRefactors}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] uppercase tracking-widest opacity-30">Success Rate</p>
-                        <p className="text-sm font-black italic text-green-400">{godModeStatus.successRate}%</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-[9px] font-black uppercase tracking-[0.3em] opacity-40 mb-3">Target Repository</label>
-                      <input
-                        type="text"
-                        value={refactorTarget}
-                        onChange={(e) => setRefactorTarget(e.target.value)}
-                        placeholder="owner/repository"
-                        className="w-full px-6 py-4 bg-black/40 border border-white/10 rounded-2xl text-sm font-mono text-white placeholder:text-zinc-600 focus:border-blue-500/50 focus:outline-none transition-all"
-                      />
-                    </div>
-                    
-                    <div className="flex gap-4">
-                      <button
-                        onClick={handleAuditRepo}
-                        disabled={isRefactoring || !refactorTarget.trim()}
-                        className="flex-1 px-8 py-4 bg-blue-600/20 border border-blue-500/30 rounded-2xl text-[10px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-600/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        {isRefactoring ? '⏳ Processing...' : '🔍 Audit'}
-                      </button>
-                      <button
-                        onClick={handleExecuteGodMode}
-                        disabled={isRefactoring || !refactorTarget.trim()}
-                        className="flex-1 px-8 py-4 bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-blue-300 hover:from-blue-600/30 hover:to-purple-600/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
-                      >
-                        {isRefactoring ? '⚡ Executing...' : '⚡ Execute God Mode'}
-                      </button>
-                    </div>
-
-                    <div className="p-6 bg-black/20 border border-white/5 rounded-2xl">
-                      <h4 className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40 mb-3">Capabilities</h4>
-                      <ul className="space-y-2 text-[10px] font-mono">
-                        <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Auto-generate missing docs</li>
-                        <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Code formatting (Black/Prettier)</li>
-                        <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Standards compliance check</li>
-                        <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Auto-create PRs</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    {refactorResult && (
-                      <div className="p-8 bg-black/40 border border-blue-500/20 rounded-2xl space-y-6">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-black italic uppercase tracking-widest text-blue-400">Results</h4>
-                          <span className="text-[9px] font-mono uppercase tracking-widest px-3 py-1 bg-blue-600/20 rounded-full text-blue-300">
-                            {refactorResult.status || refactorResult.action}
-                          </span>
-                        </div>
-
-                        {refactorResult.compliance_score && (
-                          <div>
-                            <p className="text-[9px] uppercase tracking-widest opacity-30 mb-2">Compliance Score</p>
-                            <p className="text-2xl font-black italic text-cyan-400">{refactorResult.compliance_score}</p>
-                          </div>
-                        )}
-
-                        {refactorResult.audit_log && refactorResult.audit_log.length > 0 && (
-                          <div>
-                            <p className="text-[9px] uppercase tracking-widest opacity-30 mb-3">Audit Log</p>
-                            <div className="space-y-2">
-                              {refactorResult.audit_log.map((log, i) => (
-                                <p key={i} className="text-[10px] font-mono text-yellow-400/70">• {log}</p>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {refactorResult.changes_applied && refactorResult.changes_applied.length > 0 && (
-                          <div>
-                            <p className="text-[9px] uppercase tracking-widest opacity-30 mb-3">Changes Applied</p>
-                            <div className="space-y-2">
-                              {refactorResult.changes_applied.map((change, i) => (
-                                <p key={i} className="text-[10px] font-mono text-green-400/70">✓ {change}</p>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {refactorResult.pr_url && (
-                          <a 
-                            href={refactorResult.pr_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block px-6 py-3 bg-blue-600/20 border border-blue-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-center text-blue-400 hover:bg-blue-600/30 transition-all"
-                          >
-                            View Pull Request →
-                          </a>
-                        )}
-                      </div>
-                    )}
-
-                    {!refactorResult && (
-                      <div className="h-full p-8 bg-black/20 border border-white/5 rounded-2xl flex items-center justify-center">
-                        <div className="text-center opacity-20">
-                          <p className="text-6xl mb-4">⚡</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Command</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+        {activeTab === 'code' && (
+          <div className="p-4 bg-[#05070A] border border-white/5 rounded-[40px] animate-in slide-in-from-bottom-4 h-[600px] flex flex-col">
+              <div className="p-6 border-b border-white/5">
+                <h3 className="text-sm font-black uppercase tracking-widest text-blue-400">Sovereign Code Viewer: Authentication</h3>
+                <p className="text-xs opacity-40 mt-1">Displaying live backend logic for the operator signup process.</p>
               </div>
-            </div>
-
-            <div className="p-10 bg-[#05070A] border border-white/5 rounded-[32px]">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mb-6 italic">What is God Mode?</h4>
-              <p className="text-sm leading-relaxed opacity-60 mb-4">
-                God Mode is an autonomous refactoring system that automatically audits repositories for FAANG-grade standards compliance 
-                and creates pull requests to fix any violations. It checks for missing documentation, code formatting issues, 
-                and ensures your repositories meet enterprise-level quality standards.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <div className="p-6 bg-black/20 rounded-2xl">
-                  <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Standard Files</p>
-                  <p className="text-xs font-mono">README.md, LICENSE, .gitignore, CONTRIBUTING.md</p>
-                </div>
-                <div className="p-6 bg-black/20 rounded-2xl">
-                  <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Code Quality</p>
-                  <p className="text-xs font-mono">Black, Prettier, ESLint fixes</p>
-                </div>
-                <div className="p-6 bg-black/20 rounded-2xl">
-                  <p className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-2">Auto PR</p>
-                  <p className="text-xs font-mono">Automated pull request creation</p>
-                </div>
+              <div className="flex-1 overflow-hidden">
+                <MonacoEditor 
+                  activeFile={authCodeFile}
+                  onContentChange={() => {}} 
+                />
               </div>
-            </div>
           </div>
         )}
       </div>

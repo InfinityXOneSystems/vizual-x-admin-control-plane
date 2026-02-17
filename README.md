@@ -1,121 +1,89 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Vizual-X Admin Control Plane
+# VIZUAL X | MONACO SUPREME
 
-This repository contains the Vizual-X Admin Control Plane with Monaco Editor integration and comprehensive repository management tools.
+This repository contains the full monorepo for the Vizual X Autonomous Development Control Plane, a deterministic enterprise AI compiler built with React, Node.js, and Google GenAI.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1oiktXBWh0yMNn1NxXLcFb_oT6O92CNJ0
+## System Architecture
 
-## 🚀 Quick Start
-
-**NEW: Repository was recently fixed! See [HOW_TO_USE.txt](HOW_TO_USE.txt) for complete instructions.**
-
-### Prerequisites
-- Node.js (v20+)
-- Git
-
-### Run Locally
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key
-
-3. Run the app:
-   ```bash
-   npm run dev
-   ```
-
-4. Open browser to: http://localhost:5173
-
-## 📚 Documentation
-
-- **[HOW_TO_USE.txt](HOW_TO_USE.txt)** - Visual step-by-step guide (START HERE!)
-- **[QUICK_START.md](QUICK_START.md)** - Quick reference for immediate action
-- **[REPOSITORY_RECOVERY_GUIDE.md](REPOSITORY_RECOVERY_GUIDE.md)** - Comprehensive recovery guide
-- **[SUMMARY.md](SUMMARY.md)** - Complete overview of recent fixes
-- **[MONACO_DEPLOYMENT_BLUEPRINT.md](MONACO_DEPLOYMENT_BLUEPRINT.md)** - Monaco Editor deployment guide
-
-## 🛠️ Repository Management Tools
-
-This repository includes comprehensive analysis and merge tools in the `scripts/` directory:
-
-### Analyze Your Repository
-```powershell
-# Windows
-.\scripts\analyze-local-repo.ps1 -GenerateReport
-
-# Linux/Mac
-./scripts/analyze-local-repo.sh --report
-```
-
-### Merge Code Safely
-```powershell
-.\scripts\merge-local-repos.ps1 -SourcePath "C:\AI\other-repo" -Verbose
-```
-
-See [scripts/README.md](scripts/README.md) for detailed documentation.
-
-## ✅ Recent Fixes (February 2026)
-
-- ✅ Fixed critical .gitignore issues (was blocking essential .json/.txt files)
-- ✅ Added comprehensive repository analysis scripts
-- ✅ Added safe repository merge helper
-- ✅ Fixed TypeScript errors
-- ✅ Updated GitHub Actions CI workflow
-- ✅ Added Git LFS support
-- ✅ Build and typecheck validated
-
-See [SUMMARY.md](SUMMARY.md) for complete details.
-
-## 🏗️ Project Structure
-
-```
-/
-├── components/          # React components including Monaco Editor
-├── services/            # Backend services
-├── scripts/             # Repository management scripts
-├── vscode-extension-kit/ # VS Code extension for Monaco Editor
-├── backend/             # Python backend services
-├── infra/               # Infrastructure as code
-└── docs/                # Documentation
-```
-
-## 📋 Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run typecheck` - Run TypeScript type checking
-- `npm test` - Run tests
-
-## 🔒 Security
-
-This repository uses:
-- Git LFS for large files
-- Proper .gitignore configuration
-- Regular security scanning via GitHub Actions
-
-## 🤝 Contributing
-
-1. Create a feature branch (never commit to main!)
-2. Make your changes
-3. Run analysis: `.\scripts\analyze-local-repo.ps1`
-4. Test locally: `npm run build && npm run typecheck`
-5. Push to feature branch
-6. Create Pull Request
-
-## 📞 Getting Help
-
-- Review [HOW_TO_USE.txt](HOW_TO_USE.txt) for step-by-step guidance
-- Check [scripts/README.md](scripts/README.md) for troubleshooting
-- See [QUICK_START.md](QUICK_START.md) for common solutions
+- **Frontend**: A React-based UI featuring a Monaco editor, admin dashboard, and multi-modal creation tools.
+- **Backend**: A Node.js/Express API providing REST endpoints for all system functions, with persistence via a local JSON file.
+- **Infrastructure**: Defined via Terraform for deployment to Google Cloud Platform.
+- **Containerization**: A multi-service Docker Compose setup for a consistent local development environment.
+- **CI/CD**: A GitHub Actions workflow to validate, test, and build the system on every commit.
 
 ---
 
-**Last Updated:** February 17, 2026  
-**Status:** ✅ Repository Fixed & Validated
+## Local Development Setup
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop/) and Docker Compose
+- [Node.js](https://nodejs.org/) v20.x or later
+- An active Google GenAI API key
+
+### Running Locally with Docker
+
+This is the recommended method for local development as it mirrors the production environment.
+
+1.  **Create Environment File**: Create a `.env` file in the root of the project and add your Google GenAI API key:
+    ```
+    API_KEY=your_google_genai_api_key_here
+    ```
+    The frontend will automatically have access to this key as `process.env.API_KEY`.
+
+2.  **Build and Run Containers**:
+    ```bash
+    docker-compose up --build
+    ```
+
+3.  **Access Services**:
+    - **Frontend**: `http://localhost:3000`
+    - **Backend API**: `http://localhost:3001`
+
+---
+
+## Deployment to Google Cloud
+
+### Prerequisites
+
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`)
+- [Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
+- A Google Cloud project with billing enabled
+- Enabled APIs: Cloud Build, Cloud Run, Artifact Registry, Secret Manager, IAM
+
+### Deployment Steps
+
+1.  **Authenticate with GCP**:
+    ```bash
+    gcloud auth login
+    gcloud config set project YOUR_PROJECT_ID
+    ```
+
+2.  **Store API Key in Secret Manager**:
+    ```bash
+    gcloud secrets create vix-api-key --replication-policy="automatic"
+    echo -n "your_google_genai_api_key_here" | gcloud secrets versions add vix-api-key --data-file=-
+    ```
+
+3.  **Initialize Terraform**:
+    Navigate to the `terraform` directory:
+    ```bash
+    cd terraform
+    terraform init
+    ```
+
+4.  **Configure Terraform Variables**:
+    Create a `terraform.tfvars` file in the `terraform/` directory:
+    ```
+    project_id = "your-gcp-project-id"
+    region     = "your-gcp-region" # e.g., "us-central1"
+    ```
+
+5.  **Apply Terraform Plan**:
+    ```bash
+    terraform apply
+    ```
+    Review the plan and type `yes` to deploy the infrastructure. Terraform will build the container images using Cloud Build and deploy them to Cloud Run.
+
+6.  **Access Deployed App**:
+    The Terraform output will provide the URL for the deployed frontend service.

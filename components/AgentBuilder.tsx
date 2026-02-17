@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Agent, Industry } from '../types';
 
@@ -9,7 +10,7 @@ interface AgentBuilderProps {
 export const AgentBuilder: React.FC<AgentBuilderProps> = ({ agents, setAgents }) => {
   const [name, setName] = useState('');
   const [industry, setIndustry] = useState<Industry>('AI Tech');
-  const [capabilities, setCapabilities] = useState<any[]>(['browser']);
+  const [capabilities, setCapabilities] = useState<string[]>(['browser']);
 
   const INDUSTRIES: Industry[] = ['Construction', 'Real Estate', 'Crypto', 'AI Tech', 'GitHub OS', 'Stats', 'Code Tech', 'News', 'Shadow Scrape', 'Market Signals'];
   const CAPS = [
@@ -23,7 +24,6 @@ export const AgentBuilder: React.FC<AgentBuilderProps> = ({ agents, setAgents })
 
   const handleCreate = () => {
     if (!name) return;
-    // Fix: Added load, intelligenceScore, recursiveProgress, and learnedNodes to match the required properties of the Agent interface defined in types.ts.
     const newAgent: Agent = {
       id: Math.random().toString(),
       name,

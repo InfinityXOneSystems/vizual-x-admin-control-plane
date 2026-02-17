@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,17 +29,33 @@
             --navy-core: #0E1B2C;
             --text-primary: #C8D2DC;
             --text-muted: #7C8B9C;
-            --metallic-gradient: linear-gradient(180deg, #BFC5CD, #E5EAF0, #BFC5CD);
+            --metallic-light: #E5EAF0;
+            --metallic-mid: #BFC5CD;
+            --metallic-dark: #8C949C;
+            --metallic-gradient: linear-gradient(180deg, var(--metallic-mid), var(--metallic-light), var(--metallic-mid));
             --border-color: rgba(255, 255, 255, 0.2);
+            
+            --card-bg: rgba(5, 7, 10, 0.7);
+            --input-bg: rgba(0, 0, 0, 0.4);
+            --input-placeholder: rgba(255, 255, 255, 0.4);
+            --button-alt-bg: var(--surface-secondary);
+            --button-alt-hover-bg: rgba(255, 255, 255, 0.05);
         }
 
         body.light-mode {
             --bg-absolute: #FFFFFF;
+            background: linear-gradient(180deg, #FDFEFF 0%, #E5EAF0 100%);
             --surface-primary: #F5F7FA;
             --surface-secondary: #E1E4E8;
             --text-primary: #0A0F14;
             --text-muted: #4A5568;
             --border-color: rgba(0, 0, 0, 0.15);
+
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --input-bg: rgba(225, 228, 232, 0.5);
+            --input-placeholder: #4A5568;
+            --button-alt-bg: #F5F7FA;
+            --button-alt-hover-bg: rgba(0, 0, 0, 0.05);
         }
 
         body {
@@ -63,7 +80,7 @@
         .metallic-border-card {
             border: 0.5px solid transparent;
             background: 
-                linear-gradient(rgba(5, 7, 10, 0.7), rgba(5, 7, 10, 0.7)) padding-box,
+                linear-gradient(var(--card-bg), var(--card-bg)) padding-box,
                 var(--metallic-gradient) border-box;
             backdrop-filter: blur(20px);
             border-radius: 16px;
@@ -132,19 +149,34 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
     "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "cors": "https://esm.sh/cors@^2.8.6",
-    "express": "https://esm.sh/express@^5.2.1",
+    "monaco-editor": "https://esm.sh/monaco-editor@0.45.0",
+    "lowdb": "https://esm.sh/lowdb@^7.0.1",
     "lowdb/": "https://esm.sh/lowdb@^7.0.1/",
-    "lowdb": "https://esm.sh/lowdb@^7.0.1"
+    "express": "https://esm.sh/express@^5.2.1",
+    "cors": "https://esm.sh/cors@^2.8.6",
+    "vitest/": "https://esm.sh/vitest@^4.0.18/",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "@playwright/test": "https://esm.sh/@playwright/test@^1.58.2",
+    "@testing-library/jest-dom": "https://esm.sh/@testing-library/jest-dom@^6.9.1",
+    "vitest": "https://esm.sh/vitest@^4.0.18",
+    "@testing-library/react": "https://esm.sh/@testing-library/react@^16.3.2",
+    "path": "https://esm.sh/path@^0.12.7",
+    "url": "https://esm.sh/url@^0.11.4",
+    "express-session": "https://esm.sh/express-session@^1.19.0",
+    "passport": "https://esm.sh/passport@^0.7.0",
+    "passport-github2": "https://esm.sh/passport-github2@^0.1.12",
+    "bcrypt": "https://esm.sh/bcrypt@^6.0.0",
+    "passport-google-oauth20": "https://esm.sh/passport-google-oauth20@^2.0.0",
+    "passport-local": "https://esm.sh/passport-local@^1.0.0"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="selection:bg-blue-500/30">
     <div id="root" class="h-screen w-screen"></div>
 
     <!-- Service Worker Registration -->
+    <!-- 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -156,6 +188,6 @@
             });
         }
     </script>
-<script type="module" src="/index.tsx"></script>
+     -->
 </body>
 </html>

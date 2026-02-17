@@ -4,17 +4,21 @@ import usersRouter from './users';
 import tokensRouter from './tokens';
 import flagsRouter from './flags';
 import validationRouter from './validation';
-import refactorRouter from './refactor';
-import inventoryRouter from '../routes/inventory';
+import authRouter from './auth';
+import promoRouter from './promo';
+import billingRouter from './billing';
+import connectionsRouter from './connections';
 
 const router = Router();
 
+router.use('/auth', authRouter);
 router.use('/users', usersRouter);
 router.use('/tokens', tokensRouter);
 router.use('/flags', flagsRouter);
 router.use('/validation', validationRouter);
-router.use('/refactor', refactorRouter);
-router.use('/inventory', inventoryRouter);
+router.use('/promos', promoRouter);
+router.use('/billing', billingRouter);
+router.use('/connections', connectionsRouter);
 
 router.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });

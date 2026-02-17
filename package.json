@@ -1,27 +1,23 @@
+
 {
-  "name": "vizual-x",
+  "name": "vix-monorepo",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "workspaces": [
+    "backend"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet\" && exit 0"
-  },
-  "dependencies": {
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "@google/genai": "^1.41.0",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "lowdb": "^7.0.1"
+    "test:frontend": "vitest run --root . --config ./tests/vitest.config.ts",
+    "test:e2e": "playwright test --config=./tests/playwright.config.ts",
+    "test": "npm run test:frontend && npm run test:e2e"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "@playwright/test": "^1.45.1",
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "^18.3.3",
+    "@vitejs/plugin-react": "^4.3.1",
+    "jsdom": "^24.1.0",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.2"
   }
 }

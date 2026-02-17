@@ -6,18 +6,34 @@ import { TestResult } from '../types';
 export const ValidationHub: React.FC = () => {
   const [tests, setTests] = useState<TestResult[]>([]);
   const [status, setStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProof = async () => {
-      const [t, s] = await Promise.all([
-        ApiService.validation.getTests(),
-        ApiService.validation.status()
-      ]);
-      setTests(t);
-      setStatus(s);
+      setLoading(true);
+      try {
+        const [t, s] = await Promise.all([
+          ApiService.validation.getTests(),
+          ApiService.validation.status()
+        ]);
+        setTests(t);
+        setStatus(s);
+      } catch (error) {
+        console.error("Failed to fetch validation data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchProof();
   }, []);
+  
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="w-16 h-16 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full bg-[#000000] p-10 lg:p-16 overflow-y-auto custom-scrollbar animate-in fade-in duration-700">
@@ -66,7 +82,7 @@ export const ValidationHub: React.FC = () => {
                 <div className="p-8 bg-[#05070A] border border-white/5 rounded-[32px] space-y-4">
                    <h4 className="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 italic">Monitor Endpoint</h4>
                    <div className="bg-black/40 p-5 rounded-2xl border border-white/5 flex items-center justify-between">
-                      <code className="text-[10px] text-blue-400">GET /api/monitor</code>
+                      <code className="text-[10px] text-blue-400">GET /api/validation/status</code>
                       <span className="text-[9px] font-black text-green-500">200 OK</span>
                    </div>
                 </div>

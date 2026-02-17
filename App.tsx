@@ -6,14 +6,14 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsPage } from './components/SettingsPage';
 import { ValidationHub } from './components/ValidationHub';
 import { MultiAgentNexus } from './components/MultiAgentNexus';
-import { AdminControlPlane } from './components/AdminControlPlane';
+import { InfrastructurePanel } from './components/InfrastructurePanel';
 import { AutonomousPartnerModules } from './components/AutonomousPartnerModules';
 import { HamburgerMenu } from './components/HamburgerMenu';
-import { PageNode, Message, UIConfiguration, Agent, FileData, GitCommit, Theme } from './types';
-
-const INITIAL_PROJECT_FILES: FileData[] = [
-  { id: 'fe-app', name: 'SovereignDashboard.tsx', language: 'typescript', content: `import React from 'react';\n\nexport const Dashboard = () => {\n  return (<div className="p-20"><h1 className="text-6xl font-black italic tracking-tighter text-white">VIZUAL X</h1><p className="font-bold italic text-[#2AF5FF]">Autonomous Ingress Active.</p></div>);\n};` }
-];
+import { LoginPage } from './components/LoginPage';
+import { MatrixLoadingScreen } from './components/MatrixLoadingScreen';
+import { UserAccountDropdown } from './components/UserAccountDropdown';
+import { PageNode, Message, UIConfiguration, Agent, User, Theme } from './types';
+import { ApiService } from './services/apiService';
 
 const INITIAL_AGENTS: Agent[] = [
   { id: 'arch-1', name: 'Architect', industry: 'Cloud Architecture', role: 'System Designer', status: 'idle', capabilities: ['Terraform', 'GCP', 'Docker'], description: 'Expert in enterprise infrastructure.', avatarColor: 'bg-blue-600', lastUpdate: 'Ready', logs: [], load: 12, intelligenceScore: 98, recursiveProgress: 100, learnedNodes: 1024 }
@@ -27,6 +27,9 @@ const INITIAL_SYSTEM_STATE: UIConfiguration = {
 };
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const [activePage, setActivePage] = useState<PageNode>('chat');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,7 +38,45 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [agents, setAgents] = useState<Agent[]>(INITIAL_AGENTS);
   const [isLoading, setIsLoading] = useState(false);
-  const [files] = useState<FileData[]>(INITIAL_PROJECT_FILES);
+
+  useEffect(() => {
+    const checkSession = async () => {
+        try {
+            const { authenticated, user } = await ApiService.auth.checkSession();
+            if (authenticated && user) {
+                setIsAuthenticated(true);
+                setCurrentUser(user);
+            }
+        } catch (error) {
+            console.error("Session check failed:", error);
+        } finally {
+            // Add a delay to showcase the loading screen
+            setTimeout(() => {
+                setIsAuthenticating(false);
+            }, 1500);
+        }
+    };
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    document.body.className = theme === 'light' ? 'light-mode' : '';
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+  };
+
+  const handleLoginSuccess = (user: User) => {
+    setIsAuthenticated(true);
+    setCurrentUser(user);
+  };
+
+  const handleLogout = async () => {
+    await ApiService.auth.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
 
   const navItems = [
     { id: 'dashboard', label: 'Pulse' },
@@ -51,10 +92,18 @@ const App: React.FC = () => {
     setActivePage(page);
     setIsMenuOpen(false);
   };
+  
+  if (isAuthenticating) {
+    return <MatrixLoadingScreen />;
+  }
+
+  if (!isAuthenticated || !currentUser) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} theme={theme} toggleTheme={toggleTheme} />;
+  }
 
   return (
     <div className="flex h-screen w-screen bg-[var(--bg-absolute)] text-[var(--text-primary)] overflow-hidden selection:bg-blue-500/50">
-      <aside style={{ width: isSidebarOpen ? '22%' : '0%' }} className="h-full bg-[var(--surface-primary)] border-r-[0.5px] border-[var(--border-color)] transition-all duration-300 flex flex-col z-[100]">
+      <aside style={{ width: isSidebarOpen ? '22%' : '0%' }} className="h-full bg-[var(--surface-primary)] border-r-[0.5px] border-[var(--border-color)] transition-all duration-300 flex flex-col z-[100] hidden md:flex">
         <ChatSidebar messages={messages} setMessages={setMessages} onSystemUpdate={(u) => setSystemState(prev => ({...prev, ...u}))} isLoading={isLoading} setIsLoading={setIsLoading} isCollapsed={!isSidebarOpen} />
       </aside>
 
@@ -66,14 +115,16 @@ const App: React.FC = () => {
               <div className={`hamburger-line ${isMenuOpen ? 'opacity-0' : ''}`}></div>
               <div className={`hamburger-line ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></div>
             </button>
-            <h1 className="text-xs font-black uppercase tracking-[0.4em] italic">VIZUAL X // <span className="text-[#2AF5FF]">{activePage.toUpperCase()}</span></h1>
+            <h1 className="text-xs font-black tracking-[0.4em] italic">Vizual X // <span className="text-[#2AF5FF]">{activePage.toUpperCase()}</span></h1>
           </div>
-          <nav className="hidden md:flex items-center gap-1 bg-black/60 p-1 rounded-xl border-[0.5px] border-white/20">
-            {navItems.map(item => (
-              <button key={item.id} onClick={() => setActivePage(item.id as any)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activePage === item.id ? 'bg-[#1E90FF] text-white shadow-glow' : 'text-[var(--text-muted)] hover:text-white'}`}>{item.label}</button>
-            ))}
-          </nav>
-          <div className="w-9 h-9 rounded-xl electric-gradient border-[1px] border-white/30 active-glow"></div>
+          <div className="flex items-center gap-4">
+            <nav className="hidden md:flex items-center gap-1 bg-black/60 p-1 rounded-xl border-[0.5px] border-white/20">
+              {navItems.map(item => (
+                <button key={item.id} onClick={() => setActivePage(item.id as any)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activePage === item.id ? 'bg-[#1E90FF] text-white shadow-glow' : 'text-[var(--text-muted)] hover:text-white'}`}>{item.label}</button>
+              ))}
+            </nav>
+            <UserAccountDropdown user={currentUser} onLogout={handleLogout} />
+          </div>
         </header>
         
         <HamburgerMenu 
@@ -82,17 +133,18 @@ const App: React.FC = () => {
           navItems={navItems}
           activePage={activePage}
           onNavigate={handleNavigate}
+          onLogout={handleLogout}
         />
 
-        <main className="flex-1 overflow-hidden p-6 bg-[var(--bg-absolute)]">
-           <div className="h-full w-full monaco-frame overflow-hidden relative shadow-4xl">
+        <main className="flex-1 overflow-hidden p-0 md:p-6 bg-[var(--bg-absolute)]">
+           <div className="h-full w-full md:monaco-frame overflow-hidden relative md:shadow-4xl">
               {activePage === 'dashboard' && <AdminDashboard load={12} />}
               {activePage === 'chat' && <MultiAgentNexus agents={agents} setAgents={setAgents} />}
               {activePage === 'creator' && <AutonomousPartnerModules activeModule="creator" />}
-              {activePage === 'infra' && <AdminControlPlane />}
+              {activePage === 'infra' && <InfrastructurePanel />}
               {activePage === 'editor' && <EditorSuite config={systemState} onUpdate={(u) => setSystemState(prev => ({...prev, ...u}))} />}
               {activePage === 'validation' && <ValidationHub />}
-              {activePage === 'settings' && <SettingsPage config={systemState} setConfig={setSystemState} />}
+              {activePage === 'settings' && <SettingsPage config={systemState} setConfig={setSystemState} currentUser={currentUser} onUserUpdate={setCurrentUser} />}
            </div>
         </main>
       </div>

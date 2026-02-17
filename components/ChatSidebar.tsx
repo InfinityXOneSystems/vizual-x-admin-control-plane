@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Message, UIConfiguration } from '../types';
 import { sendMessageToGemini } from '../services/geminiService';
@@ -103,7 +104,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   return (
     <div className="h-full flex flex-col p-6 bg-[var(--surface-primary)] border-r-[0.5px] border-[var(--border-color)] animate-in slide-in-from-left duration-300 overflow-hidden">
       <div className="mb-8">
-        <h2 className="text-xl font-black uppercase tracking-tighter text-[var(--text-primary)]">VIZUAL X</h2>
+        {/* FIX: Changed VIZUAL X to Vizual X and removed uppercase class */}
+        <h2 className="text-xl font-black tracking-tighter text-[var(--text-primary)]">Vizual X</h2>
         <div className="h-1 w-10 bg-[#2AF5FF] mt-1"></div>
       </div>
 
@@ -136,12 +138,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={isLoading}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit();
-            }
-          }}
           className="w-full bg-black border-[0.5px] border-white/40 rounded-xl p-5 pr-14 text-sm font-bold outline-none focus:border-[#2AF5FF] transition-all resize-none text-white placeholder:text-white/40 min-h-[100px] shadow-inner"
           placeholder="ENTER COMMAND..."
         />

@@ -106,16 +106,17 @@ export interface LintIssue {
 export interface Connector {
   id: string;
   name: string;
-  status: 'connected' | 'disconnected' | 'pending' | 'validating' | 'linked' | 'idle' | 'syncing' | 'CONNECTED' | 'DISCONNECTED' | 'PENDING' | 'VALIDATING';
+  status: 'connected' | 'disconnected' | 'pending' | 'validating' | 'syncing' | 'failed' | 'linked' | 'idle';
   latency: string;
   category: string;
   icon: string;
   lastSynced?: Date;
   details?: string;
+  validationResult?: string;
 }
 
 export interface PromptTemplate {
-  id: string;
+  id:string;
   title: string;
   category: string;
   icon: string;
@@ -143,6 +144,23 @@ export interface SystemUpdate {
   type: string;
 }
 
+export interface PromoCode {
+  id: string;
+  code: string;
+  type: 'timed_access' | 'feature_limit' | 'discount';
+  value: number; // e.g., days for timed_access, percentage for discount
+  expiresAt: string;
+  usesLeft: number;
+  featureLimitations?: string[];
+}
+
+export type ConnectionStatus = {
+  connected: boolean;
+  username?: string;
+  lastSynced?: string;
+  [key: string]: any; // for extra metadata
+};
+
 export interface User {
   id: string;
   name: string;
@@ -150,6 +168,16 @@ export interface User {
   role: string;
   status: string;
   lastActive: string;
+  password?: string;
+  accessLevel: 'full' | 'demo' | 'trial';
+  trialExpiresAt?: string;
+  promoCodeDetails?: Pick<PromoCode, 'id' | 'code' | 'type'>;
+  // Fields for live OAuth integration
+  githubId?: string;
+  avatarUrl?: string;
+  connections?: {
+    [service: string]: ConnectionStatus
+  };
 }
 
 export interface ApiToken {
@@ -166,26 +194,4 @@ export interface FeatureFlag {
   name: string;
   description: string;
   enabled: boolean;
-}
-
-export interface RefactorRequest {
-  target: string;
-  params?: Record<string, any>;
-}
-
-export interface RefactorResult {
-  action: string;
-  target: string;
-  changes_applied: string[];
-  pr_url?: string;
-  compliance_score?: string;
-  status?: string;
-  audit_log?: string[];
-}
-
-export interface GodModeStatus {
-  enabled: boolean;
-  lastRun?: Date;
-  totalRefactors: number;
-  successRate: number;
 }

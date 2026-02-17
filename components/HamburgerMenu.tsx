@@ -8,9 +8,10 @@ interface HamburgerMenuProps {
   navItems: { id: string; label: string }[];
   activePage: PageNode;
   onNavigate: (page: PageNode) => void;
+  onLogout: () => void;
 }
 
-export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ isOpen, onClose, navItems, activePage, onNavigate }) => {
+export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ isOpen, onClose, navItems, activePage, onNavigate, onLogout }) => {
   if (!isOpen) return null;
 
   return (
@@ -36,6 +37,14 @@ export const HamburgerMenu: React.FC<HamburgerMenuProps> = ({ isOpen, onClose, n
               {item.label}
             </button>
           ))}
+          <div className="pt-2 mt-2 border-t border-white/10">
+            <button
+              onClick={onLogout}
+              className="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-all"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </div>
