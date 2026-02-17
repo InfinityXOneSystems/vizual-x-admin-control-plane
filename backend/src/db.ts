@@ -1,7 +1,7 @@
 
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
-import { User, ApiToken, FeatureFlag, TestResult } from '../../types';
+import { User, ApiToken, FeatureFlag, TestResult } from './types';
 
 type AppData = {
   users: User[];

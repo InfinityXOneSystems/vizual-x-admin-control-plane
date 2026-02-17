@@ -131,7 +131,9 @@ export class InventoryService {
       }
 
       const rawData = fs.readFileSync(gcpInventoryPath, 'utf-8');
-      const gcpData = JSON.parse(rawData);
+      // Remove BOM if present
+      const cleanData = rawData.replace(/^\uFEFF/, '');
+      const gcpData = JSON.parse(cleanData);
 
       // Extract Cloud Run services
       const cloudRunServices: CloudRunService[] = [];
@@ -202,7 +204,8 @@ export class InventoryService {
       const dockerContainers: DockerContainer[] = [];
       const dockerContainersPath = path.join(localAuditPath, 'docker_containers.txt');
       if (fs.existsSync(dockerContainersPath)) {
-        const dockerData = fs.readFileSync(dockerContainersPath, 'utf-8');
+        // Read with utf16le encoding
+        const dockerData = fs.readFileSync(dockerContainersPath, 'utf16le');
         // Parse the docker ps output (skip header, process lines)
         const lines = dockerData.split('\n').filter(line => line.trim());
         for (let i = 1; i < lines.length; i++) {

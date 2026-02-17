@@ -1,24 +1,26 @@
 {
-    "name":  "vix-backend",
-    "version":  "1.0.0",
-    "description":  "Sovereign backend for Vizual X.",
-    "main":  "dist/index.js",
-    "scripts":  {
-                    "start":  "node dist/index.js",
-                    "dev":  "ts-node-dev --respawn --transpile-only src/index.ts",
-                    "build":  "tsc"
-                },
-    "dependencies":  {
-                         "axios":  "^1.7.9",
-                         "cors":  "^2.8.5",
-                         "express":  "^4.19.2",
-                         "lowdb":  "^7.0.1"
-                     },
-    "devDependencies":  {
-                            "@types/cors":  "^2.8.17",
-                            "@types/express":  "^4.17.21",
-                            "@types/node":  "^20.14.9",
-                            "ts-node-dev":  "^2.0.0",
-                            "typescript":  "^5.5.3"
-                        }
+    "name": "vix-backend",
+    "version": "1.0.0",
+    "description": "Sovereign backend for Vizual X.",
+    "main": "dist/index.js",
+    "scripts": {
+        "start": "node dist/index.js",
+        "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+        "build": "tsc"
+    },
+    "dependencies": {
+        "axios": "^1.7.9",
+        "cors": "^2.8.5",
+        "express": "^4.19.2",
+        "lowdb": "^7.0.1",
+        "ws": "^8.19.0"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.17",
+        "@types/express": "^4.17.21",
+        "@types/node": "^20.14.9",
+        "@types/ws": "^8.18.1",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.5.3"
+    }
 }
