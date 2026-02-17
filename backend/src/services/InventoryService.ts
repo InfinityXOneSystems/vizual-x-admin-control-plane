@@ -204,21 +204,31 @@ export class InventoryService {
       const dockerContainers: DockerContainer[] = [];
       const dockerContainersPath = path.join(localAuditPath, 'docker_containers.txt');
       if (fs.existsSync(dockerContainersPath)) {
-        // Read with utf16le encoding
-        const dockerData = fs.readFileSync(dockerContainersPath, 'utf16le');
-        // Parse the docker ps output (skip header, process lines)
-        const lines = dockerData.split('\n').filter(line => line.trim());
-        for (let i = 1; i < lines.length; i++) {
-          const line = lines[i];
-          // Basic parsing - Docker output format may vary
-          const parts = line.split(/\s{2,}/);
-          if (parts.length >= 2) {
-            dockerContainers.push({
-              name: parts[0]?.trim() || 'unknown',
-              image: parts[1]?.trim() || 'unknown',
-              status: parts[2]?.trim() || 'unknown'
-            });
+        try {
+          // Try UTF-16LE first (common for Windows PowerShell output)
+          let dockerData = fs.readFileSync(dockerContainersPath, 'utf16le');
+          
+          // If the file doesn't start with expected characters, try UTF-8
+          if (!dockerData.includes('NAME') && !dockerData.includes('CONTAINER')) {
+            dockerData = fs.readFileSync(dockerContainersPath, 'utf-8');
           }
+          
+          // Parse the docker ps output (skip header, process lines)
+          const lines = dockerData.split('\n').filter(line => line.trim());
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            // Basic parsing - Docker output format may vary
+            const parts = line.split(/\s{2,}/);
+            if (parts.length >= 2) {
+              dockerContainers.push({
+                name: parts[0]?.trim() || 'unknown',
+                image: parts[1]?.trim() || 'unknown',
+                status: parts[2]?.trim() || 'unknown'
+              });
+            }
+          }
+        } catch (error) {
+          console.error('[InventoryService] Error parsing Docker containers:', error);
         }
       }
 

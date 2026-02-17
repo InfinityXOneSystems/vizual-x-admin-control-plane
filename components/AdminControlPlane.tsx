@@ -118,8 +118,22 @@ export const AdminControlPlane: React.FC = () => {
     return null;
   }
 
-  const healthColor = inventory.health.status === 'healthy' ? 'green' : 
-                      inventory.health.status === 'degraded' ? 'amber' : 'red';
+  const healthStatusClasses = {
+    healthy: {
+      text: 'text-green-400',
+      dot: 'w-4 h-4 rounded-full bg-green-500 shadow-glow-green'
+    },
+    degraded: {
+      text: 'text-amber-400',
+      dot: 'w-4 h-4 rounded-full bg-amber-500 shadow-glow-amber animate-pulse'
+    },
+    critical: {
+      text: 'text-red-400',
+      dot: 'w-4 h-4 rounded-full bg-red-500 shadow-glow-red animate-pulse'
+    }
+  };
+
+  const currentHealthClass = healthStatusClasses[inventory.health.status];
 
   return (
     <div className="h-full w-full bg-[#000000] p-10 lg:p-16 overflow-y-auto custom-scrollbar animate-in fade-in duration-700">
@@ -136,12 +150,12 @@ export const AdminControlPlane: React.FC = () => {
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right">
-              <div className={`text-sm font-black uppercase tracking-widest italic text-${healthColor}-400`}>
+              <div className={`text-sm font-black uppercase tracking-widest italic ${currentHealthClass.text}`}>
                 System {inventory.health.status}
               </div>
               <div className="text-[10px] font-mono opacity-40">Score: {inventory.health.score}/100</div>
             </div>
-            <div className={`w-4 h-4 rounded-full bg-${healthColor}-500 shadow-glow-${healthColor} ${inventory.health.status === 'degraded' ? 'animate-pulse' : ''}`}></div>
+            <div className={currentHealthClass.dot}></div>
           </div>
         </header>
 

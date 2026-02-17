@@ -37,7 +37,12 @@ export const InfinityMatrix: React.FC<InfinityMatrixProps> = ({ cloudRunServices
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {cloudRunServices.map((service, idx) => {
           const isOnline = service.status === 'True' || service.status === 'online';
-          const statusColor = isOnline ? 'green' : 'amber';
+          const statusDotClass = isOnline 
+            ? 'w-3 h-3 rounded-full bg-green-500 shadow-glow-green' 
+            : 'w-3 h-3 rounded-full bg-amber-500 shadow-glow-amber animate-pulse';
+          const statusTextClass = isOnline 
+            ? 'text-green-400 font-bold' 
+            : 'text-amber-400 font-bold';
           
           return (
             <div 
@@ -55,7 +60,7 @@ export const InfinityMatrix: React.FC<InfinityMatrixProps> = ({ cloudRunServices
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border border-white/10 bg-black shadow-inner">
                     ☁️
                   </div>
-                  <div className={`w-3 h-3 rounded-full bg-${statusColor}-500 shadow-glow-${statusColor} ${!isOnline ? 'animate-pulse' : ''}`}></div>
+                  <div className={statusDotClass}></div>
                 </div>
                 
                 <div>
@@ -72,7 +77,7 @@ export const InfinityMatrix: React.FC<InfinityMatrixProps> = ({ cloudRunServices
               <div className="space-y-4 relative z-10 pt-8 border-t border-white/5">
                 <div className="flex justify-between items-center text-[10px] font-mono opacity-30 uppercase italic">
                   <span>Status</span>
-                  <span className={`text-${statusColor}-400 font-bold`}>
+                  <span className={statusTextClass}>
                     {isOnline ? 'ONLINE' : 'DEGRADED'}
                   </span>
                 </div>
