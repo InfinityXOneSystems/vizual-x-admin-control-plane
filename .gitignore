@@ -17,6 +17,10 @@ dist-ssr
 build/
 out/
 
+# Compiled JavaScript files (TypeScript outputs)
+/*.js
+/*.js.map
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
