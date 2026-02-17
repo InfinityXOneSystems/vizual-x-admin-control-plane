@@ -43,7 +43,9 @@
   "exclude": [
     "node_modules",
     "dist",
+    // vscode-extension-kit requires 'vscode' module which is only available in VS Code extension context
     "vscode-extension-kit",
+    // OrchestratorConnector requires 'axios' which is not currently a dependency
     "services/OrchestratorConnector.ts"
   ]
 }

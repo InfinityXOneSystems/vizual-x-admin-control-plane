@@ -45,8 +45,9 @@ jobs:
         run: |
           echo "::group::Running TypeScript Type Check"
           echo "🔍 Checking type safety with: npm run typecheck"
+          set -o pipefail
           npm run typecheck 2>&1 | tee typecheck.log
-          TYPECHECK_EXIT=${PIPESTATUS[0]}
+          TYPECHECK_EXIT=$?
           echo "::endgroup::"
           
           if [ $TYPECHECK_EXIT -ne 0 ]; then
@@ -67,8 +68,9 @@ jobs:
           
           # Use TypeScript compiler for syntax validation
           echo "Running: npx tsc --noEmit --skipLibCheck"
+          set -o pipefail
           npx tsc --noEmit --skipLibCheck 2>&1 | tee integrity.log
-          INTEGRITY_EXIT=${PIPESTATUS[0]}
+          INTEGRITY_EXIT=$?
           echo "::endgroup::"
           
           if [ $INTEGRITY_EXIT -ne 0 ]; then
@@ -86,8 +88,9 @@ jobs:
         run: |
           echo "::group::Building for Production"
           echo "🏗️ Building project with: npm run build"
+          set -o pipefail
           npm run build 2>&1 | tee build.log
-          BUILD_EXIT=${PIPESTATUS[0]}
+          BUILD_EXIT=$?
           echo "::endgroup::"
           
           if [ $BUILD_EXIT -ne 0 ]; then
