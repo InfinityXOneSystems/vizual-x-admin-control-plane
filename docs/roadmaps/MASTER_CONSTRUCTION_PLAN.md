@@ -908,22 +908,16 @@ Asset Management (portfolio tracking)
 
 ### Projected 5-Year ROI
 
-**Investment:** $2.4M (total phases 1-10 development)
-- Phase 1-4: $800K (foundation)
-- Phase 5-7: $900K (intelligence)
-- Phase 8-10: $700K (autonomy)
+This initiative is expected to deliver a strong positive return over a five-year horizon, with benefits compounding as automation, autonomy, and ecosystem effects mature across phases 1–10.
 
-**Returns (Cumulative):**
-- **Year 1:** $1.8M (efficiency gains, faster delivery)
-- **Year 2:** $4.2M (market expansion, cost reduction)
-- **Year 3:** $7.6M (network effects, autonomy benefits)
-- **Year 4:** $11.8M (compounding improvements)
-- **Year 5:** $17.2M (full ecosystem maturity)
+Detailed financial projections, phase-by-phase investment breakdowns, and exact ROI calculations are maintained in the internal financial planning and portfolio management documentation and are not included in this public roadmap.
 
-**5-Year Total:** $42.6M return on $2.4M investment  
-**ROI:** 1,675%  
-**Payback Period:** 8 months
+At a high level, the program is designed to:
+- Achieve payback within the first year of full deployment.
+- Generate materially increasing value each subsequent year as adoption, reuse, and automation expand.
+- Provide a multi-year ROI that justifies continued strategic investment in the platform.
 
+For precise figures and assumptions, refer to the internal "Vizual-X Financial Model & ROI Analysis" in the private documentation system.
 ---
 
 ## 🚀 IV. IMPLEMENTATION RUNBOOKS
