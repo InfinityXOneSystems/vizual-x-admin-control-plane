@@ -39,7 +39,8 @@ export const AdminDashboard: React.FC<{fullView?: boolean, load: number}> = ({ f
 
   const validateRepositoryFormat = (target: string): boolean => {
     // Validate format: owner/repository
-    const repoRegex = /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+$/;
+    // Repository names must start with alphanumeric or underscore, can contain dots/dashes after
+    const repoRegex = /^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_][a-zA-Z0-9_.-]*$/;
     return repoRegex.test(target);
   };
 
