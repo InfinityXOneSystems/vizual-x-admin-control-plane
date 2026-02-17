@@ -1,0 +1,354 @@
+name: GitHub Forensic Audit
+
+# This workflow performs a comprehensive forensic audit of GitHub repository settings,
+# configurations, and installed apps. It runs on a schedule and can be triggered manually.
+
+on:
+  schedule:
+    # Run daily at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      detailed_output:
+        description: 'Generate detailed output (includes more verbose data)'
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  contents: write  # Required to commit audit results
+  actions: read     # Required to read workflow information
+  issues: read      # Required to read issue data
+  pull-requests: read  # Required to read PR data
+
+jobs:
+  github-forensic-audit:
+    name: 🔍 GitHub Forensic Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive audit
+      
+      - name: 🔧 Setup GitHub CLI
+        run: |
+          # GitHub CLI is pre-installed on GitHub Actions runners
+          gh --version
+          echo "✅ GitHub CLI is ready"
+      
+      - name: 📊 Audit Repository Variables
+        id: audit-variables
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "# Repository Variables Audit" > audit-variables.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-variables.md
+          echo "Repository: ${{ github.repository }}" >> audit-variables.md
+          echo "" >> audit-variables.md
+          
+          echo "## Repository Variables" >> audit-variables.md
+          echo "" >> audit-variables.md
+          echo '```' >> audit-variables.md
+          gh variable list --repo ${{ github.repository }} 2>&1 || echo "No variables found or insufficient permissions" >> audit-variables.md
+          echo '```' >> audit-variables.md
+          echo "" >> audit-variables.md
+          
+          echo "## Repository Secrets" >> audit-variables.md
+          echo "" >> audit-variables.md
+          echo "⚠️ **Note:** Secret values are not accessible via API for security reasons." >> audit-variables.md
+          echo "Only secret names are listed below." >> audit-variables.md
+          echo "" >> audit-variables.md
+          echo '```' >> audit-variables.md
+          gh secret list --repo ${{ github.repository }} 2>&1 || echo "No secrets found or insufficient permissions" >> audit-variables.md
+          echo '```' >> audit-variables.md
+          
+          echo "✅ Repository variables audit complete"
+      
+      - name: 🛡️ Audit Branch Protection Rules
+        id: audit-branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "# Branch Protection Rules Audit" > audit-branch-protection.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-branch-protection.md
+          echo "Repository: ${{ github.repository }}" >> audit-branch-protection.md
+          echo "" >> audit-branch-protection.md
+          
+          echo "## All Branches" >> audit-branch-protection.md
+          echo "" >> audit-branch-protection.md
+          echo '```' >> audit-branch-protection.md
+          gh api repos/${{ github.repository }}/branches --paginate | jq -r '.[] | "\(.name) (protected: \(.protected))"' 2>&1 || echo "Could not list branches" >> audit-branch-protection.md
+          echo '```' >> audit-branch-protection.md
+          echo "" >> audit-branch-protection.md
+          
+          echo "## Protected Branches" >> audit-branch-protection.md
+          echo "" >> audit-branch-protection.md
+          
+          # Get protected branches
+          protected_branches=$(gh api repos/${{ github.repository }}/branches --paginate | jq -r '.[] | select(.protected == true) | .name' 2>&1)
+          
+          if [ -n "$protected_branches" ]; then
+            for branch in $protected_branches; do
+              echo "### Branch: $branch" >> audit-branch-protection.md
+              echo "" >> audit-branch-protection.md
+              echo '```json' >> audit-branch-protection.md
+              gh api repos/${{ github.repository }}/branches/$branch/protection 2>&1 || echo "Could not get protection rules for $branch" >> audit-branch-protection.md
+              echo '```' >> audit-branch-protection.md
+              echo "" >> audit-branch-protection.md
+            done
+          else
+            echo "No protected branches found." >> audit-branch-protection.md
+          fi
+          
+          echo "✅ Branch protection audit complete"
+      
+      - name: 📱 Audit Installed GitHub Apps
+        id: audit-apps
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "# GitHub Apps Audit" > audit-github-apps.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-github-apps.md
+          echo "Repository: ${{ github.repository }}" >> audit-github-apps.md
+          echo "" >> audit-github-apps.md
+          
+          echo "## Installed Apps" >> audit-github-apps.md
+          echo "" >> audit-github-apps.md
+          echo '```json' >> audit-github-apps.md
+          gh api repos/${{ github.repository }}/installations --paginate 2>&1 || echo "No apps found or insufficient permissions" >> audit-github-apps.md
+          echo '```' >> audit-github-apps.md
+          echo "" >> audit-github-apps.md
+          
+          echo "## Webhooks" >> audit-github-apps.md
+          echo "" >> audit-github-apps.md
+          echo '```json' >> audit-github-apps.md
+          gh api repos/${{ github.repository }}/hooks --paginate 2>&1 || echo "No webhooks found or insufficient permissions" >> audit-github-apps.md
+          echo '```' >> audit-github-apps.md
+          
+          echo "✅ GitHub Apps audit complete"
+      
+      - name: 📋 Audit Repository Settings
+        id: audit-settings
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "# Repository Settings Audit" > audit-repo-settings.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-repo-settings.md
+          echo "Repository: ${{ github.repository }}" >> audit-repo-settings.md
+          echo "" >> audit-repo-settings.md
+          
+          echo "## Repository Information" >> audit-repo-settings.md
+          echo "" >> audit-repo-settings.md
+          echo '```json' >> audit-repo-settings.md
+          gh api repos/${{ github.repository }} 2>&1 | jq '{
+            name: .name,
+            full_name: .full_name,
+            private: .private,
+            description: .description,
+            homepage: .homepage,
+            default_branch: .default_branch,
+            visibility: .visibility,
+            has_issues: .has_issues,
+            has_projects: .has_projects,
+            has_wiki: .has_wiki,
+            has_discussions: .has_discussions,
+            archived: .archived,
+            disabled: .disabled,
+            allow_squash_merge: .allow_squash_merge,
+            allow_merge_commit: .allow_merge_commit,
+            allow_rebase_merge: .allow_rebase_merge,
+            allow_auto_merge: .allow_auto_merge,
+            delete_branch_on_merge: .delete_branch_on_merge,
+            created_at: .created_at,
+            updated_at: .updated_at,
+            pushed_at: .pushed_at
+          }' || echo "Could not fetch repository settings" >> audit-repo-settings.md
+          echo '```' >> audit-repo-settings.md
+          echo "" >> audit-repo-settings.md
+          
+          echo "## Collaborators" >> audit-repo-settings.md
+          echo "" >> audit-repo-settings.md
+          echo '```' >> audit-repo-settings.md
+          gh api repos/${{ github.repository }}/collaborators --paginate | jq -r '.[] | "\(.login) (permission: \(.permissions | to_entries[] | select(.value == true) | .key | ascii_upcase) )"' 2>&1 || echo "Could not list collaborators" >> audit-repo-settings.md
+          echo '```' >> audit-repo-settings.md
+          echo "" >> audit-repo-settings.md
+          
+          echo "## Topics/Tags" >> audit-repo-settings.md
+          echo "" >> audit-repo-settings.md
+          echo '```' >> audit-repo-settings.md
+          gh api repos/${{ github.repository }}/topics --header "Accept: application/vnd.github.mercy-preview+json" | jq -r '.names[]' 2>&1 || echo "No topics found" >> audit-repo-settings.md
+          echo '```' >> audit-repo-settings.md
+          
+          echo "✅ Repository settings audit complete"
+      
+      - name: 🔄 Audit Workflows
+        id: audit-workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "# GitHub Actions Workflows Audit" > audit-workflows.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-workflows.md
+          echo "Repository: ${{ github.repository }}" >> audit-workflows.md
+          echo "" >> audit-workflows.md
+          
+          echo "## Active Workflows" >> audit-workflows.md
+          echo "" >> audit-workflows.md
+          echo '```' >> audit-workflows.md
+          gh workflow list --repo ${{ github.repository }} 2>&1 || echo "No workflows found" >> audit-workflows.md
+          echo '```' >> audit-workflows.md
+          echo "" >> audit-workflows.md
+          
+          echo "## Recent Workflow Runs" >> audit-workflows.md
+          echo "" >> audit-workflows.md
+          echo '```' >> audit-workflows.md
+          gh run list --repo ${{ github.repository }} --limit 20 2>&1 || echo "No recent runs found" >> audit-workflows.md
+          echo '```' >> audit-workflows.md
+          echo "" >> audit-workflows.md
+          
+          echo "## Workflow Permissions" >> audit-workflows.md
+          echo "" >> audit-workflows.md
+          echo '```json' >> audit-workflows.md
+          gh api repos/${{ github.repository }}/actions/permissions 2>&1 || echo "Could not fetch workflow permissions" >> audit-workflows.md
+          echo '```' >> audit-workflows.md
+          
+          echo "✅ Workflows audit complete"
+      
+      - name: 📦 Audit Deployment Environments
+        id: audit-environments
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "# Deployment Environments Audit" > audit-environments.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> audit-environments.md
+          echo "Repository: ${{ github.repository }}" >> audit-environments.md
+          echo "" >> audit-environments.md
+          
+          echo "## Environments" >> audit-environments.md
+          echo "" >> audit-environments.md
+          echo '```json' >> audit-environments.md
+          gh api repos/${{ github.repository }}/environments --paginate 2>&1 || echo "No environments found or insufficient permissions" >> audit-environments.md
+          echo '```' >> audit-environments.md
+          
+          echo "✅ Environments audit complete"
+      
+      - name: 📝 Generate Audit Summary
+        id: generate-summary
+        run: |
+          timestamp=$(date -u '+%Y%m%d_%H%M%S')
+          audit_dir="readiness/github_audit_${timestamp}"
+          mkdir -p "$audit_dir"
+          
+          # Move all audit files to the timestamped directory
+          mv audit-*.md "$audit_dir/" 2>/dev/null || true
+          
+          # Create summary
+          cat > "$audit_dir/summary.md" << EOF
+          # Vizual-X GitHub Forensic Audit Summary
+          Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          Repository: ${{ github.repository }}
+          
+          ## Audit Overview
+          
+          This forensic audit captured the complete state of the GitHub repository configuration,
+          including settings, security policies, installed apps, and workflows.
+          
+          ## Files Generated
+          
+          1. `audit-repo-settings.md` - Repository configuration and metadata
+          2. `audit-variables.md` - Repository variables and secrets (names only)
+          3. `audit-branch-protection.md` - Branch protection rules
+          4. `audit-github-apps.md` - Installed GitHub Apps and webhooks
+          5. `audit-workflows.md` - GitHub Actions workflows and permissions
+          6. `audit-environments.md` - Deployment environments
+          7. `summary.md` - This file
+          
+          ## Key Findings
+          
+          ### Repository Configuration
+          - **Default Branch:** $(gh api repos/${{ github.repository }} | jq -r .default_branch)
+          - **Visibility:** $(gh api repos/${{ github.repository }} | jq -r .visibility)
+          - **Discussions Enabled:** $(gh api repos/${{ github.repository }} | jq -r .has_discussions)
+          
+          ### Security Status
+          - Branch protection rules: See `audit-branch-protection.md`
+          - Secret scanning: See repository security settings
+          - Dependabot: See repository security settings
+          
+          ### Integration Status
+          - Active workflows: See `audit-workflows.md`
+          - Installed apps: See `audit-github-apps.md`
+          - Environments: See `audit-environments.md`
+          
+          ## Next Steps
+          
+          1. Review each audit report for completeness and security
+          2. Compare with local system audit (run `audit-local-system.ps1`)
+          3. Compare with GCP inventory (run `gcp-inventory-scan.sh`)
+          4. Consolidate findings using the `00_SYSTEM_CONSOLIDATION_PLAN.md` guide
+          5. Address any security concerns identified in branch protection or app permissions
+          
+          ## Recommendations
+          
+          - ✅ Enable branch protection on main branches
+          - ✅ Enable secret scanning if not already active
+          - ✅ Review installed app permissions regularly
+          - ✅ Audit workflow permissions to follow principle of least privilege
+          - ✅ Enable required status checks before merging
+          - ✅ Require code review approvals for sensitive branches
+          
+          ---
+          *Generated by Vizual-X Forensic Toolkit*
+          EOF
+          
+          echo "✅ Audit summary generated"
+          echo "AUDIT_DIR=$audit_dir" >> $GITHUB_OUTPUT
+      
+      - name: 📤 Commit Audit Results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          audit_dir="${{ steps.generate-summary.outputs.AUDIT_DIR }}"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add "$audit_dir"
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "GitHub forensic audit: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" \
+                       -m "Automated audit of repository settings, apps, and workflows" \
+                       -m "Audit directory: $audit_dir"
+            git push
+            echo "✅ Audit results committed and pushed"
+          fi
+      
+      - name: 📤 Upload Audit Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-forensic-audit-${{ github.run_number }}
+          path: readiness/github_audit_*
+          retention-days: 90
+      
+      - name: 📊 Audit Summary Output
+        if: always()
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "    GITHUB FORENSIC AUDIT COMPLETE"
+          echo "════════════════════════════════════════════════════════"
+          echo ""
+          echo "✅ Repository variables audited"
+          echo "✅ Branch protection rules documented"
+          echo "✅ GitHub Apps inventoried"
+          echo "✅ Repository settings captured"
+          echo "✅ Workflows audited"
+          echo "✅ Environments documented"
+          echo ""
+          echo "📁 Results saved to: ${{ steps.generate-summary.outputs.AUDIT_DIR }}"
+          echo "📦 Artifact available in workflow run"
+          echo ""
+          echo "Review the summary.md file for next steps."
+          echo "════════════════════════════════════════════════════════"

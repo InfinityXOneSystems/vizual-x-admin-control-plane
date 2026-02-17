@@ -59,7 +59,59 @@ cd C:\AI\vizual-x-admin-control-plane
 - Detailed merge analysis
 - `merge-commands.txt` with step-by-step commands
 
+### 3. audit-local-system.ps1
+**Purpose:** Comprehensive forensic audit of local development environment for system consolidation.
+
+**Features:**
+- Docker status and inventory (images, containers, system info)
+- Ollama installation and model catalog
+- Git configuration and SSH keys
+- AI environment variables (Ollama, OpenAI, Anthropic, Google, GitHub)
+- Timestamped output with detailed reports
+
+**Usage:**
+```powershell
+cd C:\AI\vizual-x-admin-control-plane
+.\scripts\audit-local-system.ps1
+```
+
+**Output:**
+- Directory: `readiness/local_audit_[timestamp]/`
+- Files: `docker-status.md`, `ollama-status.md`, `git-config.md`, `ai-environment-variables.md`, `summary.md`
+
+### 4. gcp-inventory-scan.sh
+**Purpose:** Comprehensive forensic inventory of Google Cloud Platform resources.
+
+**Features:**
+- Cloud Run services inventory
+- Cloud Functions (Gen 1 & Gen 2)
+- Pub/Sub topics and subscriptions
+- Firestore databases
+- Cloud SQL instances
+- IAM policies and service accounts
+
+**Usage:**
+```bash
+./scripts/gcp-inventory-scan.sh your-gcp-project-id
+```
+
+**Requirements:**
+- gcloud CLI installed and authenticated
+- Appropriate GCP permissions
+
+**Output:**
+- Directory: `readiness/gcp_inventory_[timestamp]/`
+- Files: `cloudrun-services.md`, `cloud-functions.md`, `pubsub-topics.md`, `firestore-databases.md`, `cloudsql-instances.md`, `iam-policies.md`, `summary.md`
+
 ## Common Issues & Solutions
+
+### Forensic Toolkit Usage
+
+For system consolidation and forensic analysis:
+1. **Local System Audit:** Run `.\scripts\audit-local-system.ps1` to capture local environment state
+2. **GCP Inventory:** Run `./scripts/gcp-inventory-scan.sh PROJECT_ID` to scan cloud resources
+3. **GitHub Audit:** Workflow runs automatically daily or trigger manually in GitHub Actions
+4. **Consolidation:** Review `docs/00_SYSTEM_CONSOLIDATION_PLAN.md` for integration strategy
 
 ### Issue 1: Repository too large to push
 **Symptoms:**
