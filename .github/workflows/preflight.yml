@@ -32,7 +32,8 @@ jobs:
 
       - name: Lint (if available)
         run: |
-          if npm run lint --if-present 2>/dev/null; then
+          if grep -q '"lint"' package.json; then
+            npm run lint
             echo "✅ Lint passed"
           else
             echo "⚠️  No lint script configured - skipping lint check"
