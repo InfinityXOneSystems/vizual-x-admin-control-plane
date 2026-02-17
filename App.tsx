@@ -6,7 +6,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsPage } from './components/SettingsPage';
 import { ValidationHub } from './components/ValidationHub';
 import { MultiAgentNexus } from './components/MultiAgentNexus';
-import { InfrastructurePanel } from './components/InfrastructurePanel';
+import { AdminControlPlane } from './components/AdminControlPlane';
 import { AutonomousPartnerModules } from './components/AutonomousPartnerModules';
 import { HamburgerMenu } from './components/HamburgerMenu';
 import { PageNode, Message, UIConfiguration, Agent, FileData, GitCommit, Theme } from './types';
@@ -89,7 +89,7 @@ const App: React.FC = () => {
               {activePage === 'dashboard' && <AdminDashboard load={12} />}
               {activePage === 'chat' && <MultiAgentNexus agents={agents} setAgents={setAgents} />}
               {activePage === 'creator' && <AutonomousPartnerModules activeModule="creator" />}
-              {activePage === 'infra' && <InfrastructurePanel />}
+              {activePage === 'infra' && <AdminControlPlane />}
               {activePage === 'editor' && <EditorSuite config={systemState} onUpdate={(u) => setSystemState(prev => ({...prev, ...u}))} />}
               {activePage === 'validation' && <ValidationHub />}
               {activePage === 'settings' && <SettingsPage config={systemState} setConfig={setSystemState} />}

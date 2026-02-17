@@ -2,6 +2,11 @@ import WebSocket from 'ws';
 import { Server as HTTPServer } from 'http';
 import { EventEmitter } from 'events';
 
+// Extend WebSocket to include custom properties
+interface ExtendedWebSocket extends WebSocket {
+  isAlive?: boolean;
+}
+
 interface EditorMessage {
   type: string;
   fileId?: string;
@@ -26,8 +31,8 @@ interface ClientMetadata {
  */
 export class EditorWebSocketServer extends EventEmitter {
   private wss: WebSocket.Server;
-  private clients: Map<WebSocket, ClientMetadata> = new Map();
-  private fileSubscribers: Map<string, Set<WebSocket>> = new Map();
+  private clients: Map<ExtendedWebSocket, ClientMetadata> = new Map();
+  private fileSubscribers: Map<string, Set<ExtendedWebSocket>> = new Map();
   private messageHistory: EditorMessage[] = [];
   private maxHistorySize: number = 1000;
 
@@ -42,7 +47,7 @@ export class EditorWebSocketServer extends EventEmitter {
   }
 
   private setupHandlers() {
-    this.wss.on('connection', (ws: WebSocket) => {
+    this.wss.on('connection', (ws: ExtendedWebSocket) => {
       const clientId = this.generateClientId();
       const metadata: ClientMetadata = {
         id: clientId,
@@ -51,6 +56,9 @@ export class EditorWebSocketServer extends EventEmitter {
 
       this.clients.set(ws, metadata);
       console.log(`[WebSocketServer] New client connected: ${clientId}. Total: ${this.clients.size}`);
+
+      // Initialize isAlive property
+      ws.isAlive = true;
 
       // Send welcome message
       this.sendToClient(ws, {
@@ -73,17 +81,18 @@ export class EditorWebSocketServer extends EventEmitter {
 
       ws.on('pong', () => {
         // Keep-alive mechanism
+        ws.isAlive = true;
       });
     });
 
     // Keep-alive ping every 30 seconds
     setInterval(() => {
-      this.wss.clients.forEach((ws: WebSocket) => {
+      this.wss.clients.forEach((ws: ExtendedWebSocket) => {
         if (!ws.isAlive) {
           ws.terminate();
           return;
         }
-        (ws as any).isAlive = false;
+        ws.isAlive = false;
         ws.ping();
       });
     }, 30000);
@@ -204,10 +213,11 @@ export class EditorWebSocketServer extends EventEmitter {
     const fileId = metadata.activeFile;
     if (!fileId) return;
 
+    const { type: _type, ...restMessage } = message;
     this.broadcastToFileSubscribers(fileId, {
       type: 'selection-changed',
       userId: metadata.userId,
-      ...message,
+      ...restMessage,
       timestamp: message.timestamp
     }, sender);
   }
@@ -249,7 +259,7 @@ export class EditorWebSocketServer extends EventEmitter {
     }
   }
 
-  private broadcastToFileSubscribers(fileId: string, message: any, excludeSender?: WebSocket) {
+  private broadcastToFileSubscribers(fileId: string, message: any, excludeSender?: ExtendedWebSocket) {
     const subscribers = this.fileSubscribers.get(fileId);
     if (!subscribers) return;
 
@@ -269,7 +279,7 @@ export class EditorWebSocketServer extends EventEmitter {
     });
   }
 
-  private broadcast(message: any, excludeSender?: WebSocket) {
+  private broadcast(message: any, excludeSender?: ExtendedWebSocket) {
     this.wss.clients.forEach((client: WebSocket) => {
       if (client !== excludeSender && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(message));
