@@ -25,5 +25,25 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+    
+    /* Strict Type-Checking Options - Enable these as the codebase matures
+     * Uncomment these options to enable stricter validation for Preflight Guardian:
+     * 
+     * "strict": true,
+     * "noUnusedLocals": true,
+     * "noUnusedParameters": true,
+     * "noFallthroughCasesInSwitch": true,
+     * "noImplicitReturns": true
+     */
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "vscode-extension-kit",
+    "services/OrchestratorConnector.ts"
+  ]
 }
