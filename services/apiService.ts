@@ -56,7 +56,8 @@ export const ApiService = {
     list: async (): Promise<FeatureFlag[]> => {
       return get(STORAGE_KEYS.FLAGS, [
         { id: 'f_1', name: 'Autonomous Compiler', description: 'Enable real-time LLM logic injection', enabled: true },
-        { id: 'f_2', name: 'Quantum Sharding', description: 'Distribute workspace across multiple clusters', enabled: false }
+        { id: 'f_2', name: 'Quantum Sharding', description: 'Distribute workspace across multiple clusters', enabled: false },
+        { id: 'f_3', name: 'God Mode Refactor', description: 'Autonomous repository standards enforcement and auto-fix', enabled: true }
       ]);
     },
     toggle: async (id: string) => {
