@@ -97,7 +97,7 @@ jobs:
             echo "::error::❌ Build failed"
             echo "::error::Command: npm run build"
             echo "::error::AI Agent Action: Fix build errors reported in build.log"
-            cat build.log | grep -i "error" || cat build.log
+            grep -i "error" build.log || cat build.log
             exit 1
           fi
           
