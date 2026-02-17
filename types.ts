@@ -167,3 +167,33 @@ export interface FeatureFlag {
   description: string;
   enabled: boolean;
 }
+
+// Authentication Types
+export interface AuthResult {
+  success: boolean;
+  token?: string;
+  user?: AuthUser;
+  error?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  role: 'admin' | 'user' | 'operator';
+}
+
+export interface GoogleAIConfig {
+  apiKey: string;
+  projectId?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface AIMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+}
