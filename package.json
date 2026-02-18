@@ -7,17 +7,29 @@
     "backend"
   ],
   "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
     "test:frontend": "vitest run --root . --config ./tests/vitest.config.ts",
     "test:e2e": "playwright test --config=./tests/playwright.config.ts",
     "test": "npm run test:frontend && npm run test:e2e"
+  },
+  "dependencies": {
+    "@google/genai": "^1.41.0",
+    "monaco-editor": "^0.50.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.24.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.45.1",
     "@testing-library/react": "^16.0.0",
     "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "jsdom": "^24.1.0",
     "typescript": "^5.5.3",
+    "vite": "^5.3.1",
     "vitest": "^2.0.2"
   }
 }
