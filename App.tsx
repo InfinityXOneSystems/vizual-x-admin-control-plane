@@ -12,6 +12,7 @@ import { HamburgerMenu } from './components/HamburgerMenu';
 import { LoginPage } from './components/LoginPage';
 import { MatrixLoadingScreen } from './components/MatrixLoadingScreen';
 import { UserAccountDropdown } from './components/UserAccountDropdown';
+import { SyncStatusPanel } from './components/SyncStatusPanel';
 import { PageNode, Message, UIConfiguration, Agent, User, Theme } from './types';
 import { ApiService } from './services/apiService';
 
@@ -85,6 +86,7 @@ const App: React.FC = () => {
     { id: 'editor', label: 'Monaco' },
     { id: 'infra', label: 'Infra' },
     { id: 'validation', label: 'Proof' },
+    { id: 'git', label: 'Sync' },
     { id: 'settings', label: 'Config' }
   ];
 
@@ -144,6 +146,7 @@ const App: React.FC = () => {
               {activePage === 'infra' && <InfrastructurePanel />}
               {activePage === 'editor' && <EditorSuite config={systemState} onUpdate={(u) => setSystemState(prev => ({...prev, ...u}))} />}
               {activePage === 'validation' && <ValidationHub />}
+              {activePage === 'git' && <SyncStatusPanel />}
               {activePage === 'settings' && <SettingsPage config={systemState} setConfig={setSystemState} currentUser={currentUser} onUserUpdate={setCurrentUser} />}
            </div>
         </main>
