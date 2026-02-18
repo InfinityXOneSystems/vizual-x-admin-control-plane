@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { ChatSidebar } from './components/ChatSidebar';
 import { EditorSuite } from './components/EditorSuite';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -14,6 +13,7 @@ import { MatrixLoadingScreen } from './components/MatrixLoadingScreen';
 import { UserAccountDropdown } from './components/UserAccountDropdown';
 import { PageNode, Message, UIConfiguration, Agent, User, Theme } from './types';
 import { ApiService } from './services/apiService';
+import { authService } from './services/authService';
 
 const INITIAL_AGENTS: Agent[] = [
   { id: 'arch-1', name: 'Architect', industry: 'Cloud Architecture', role: 'System Designer', status: 'idle', capabilities: ['Terraform', 'GCP', 'Docker'], description: 'Expert in enterprise infrastructure.', avatarColor: 'bg-blue-600', lastUpdate: 'Ready', logs: [], load: 12, intelligenceScore: 98, recursiveProgress: 100, learnedNodes: 1024 }
@@ -40,23 +40,16 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const checkSession = async () => {
-        try {
-            const { authenticated, user } = await ApiService.auth.checkSession();
-            if (authenticated && user) {
-                setIsAuthenticated(true);
-                setCurrentUser(user);
-            }
-        } catch (error) {
-            console.error("Session check failed:", error);
-        } finally {
-            // Add a delay to showcase the loading screen
-            setTimeout(() => {
-                setIsAuthenticating(false);
-            }, 1500);
+    const initAuth = async () => {
+        // Use the authService for the check
+        const user = authService.getUser();
+        if (user) {
+            setIsAuthenticated(true);
+            setCurrentUser(user);
         }
+        setTimeout(() => setIsAuthenticating(false), 1000);
     };
-    checkSession();
+    initAuth();
   }, []);
 
   useEffect(() => {
@@ -72,8 +65,8 @@ const App: React.FC = () => {
     setCurrentUser(user);
   };
 
-  const handleLogout = async () => {
-    await ApiService.auth.logout();
+  const handleLogout = () => {
+    authService.logout();
     setIsAuthenticated(false);
     setCurrentUser(null);
   };
@@ -97,30 +90,31 @@ const App: React.FC = () => {
     return <MatrixLoadingScreen />;
   }
 
-  if (!isAuthenticated || !currentUser) {
+  // Show Login Page if not authenticated
+  if (!isAuthenticated) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} theme={theme} toggleTheme={toggleTheme} />;
   }
 
   return (
-    <div className="flex h-screen w-screen bg-[var(--bg-absolute)] text-[var(--text-primary)] overflow-hidden selection:bg-blue-500/50">
-      <aside style={{ width: isSidebarOpen ? '22%' : '0%' }} className="h-full bg-[var(--surface-primary)] border-r-[0.5px] border-[var(--border-color)] transition-all duration-300 flex flex-col z-[100] hidden md:flex">
+    <div className='flex h-screen w-screen bg-[var(--bg-absolute)] text-[var(--text-primary)] overflow-hidden selection:bg-blue-500/50'>
+      <aside style={{ width: isSidebarOpen ? '22%' : '0%' }} className='h-full bg-[var(--surface-primary)] border-r-[0.5px] border-[var(--border-color)] transition-all duration-300 flex flex-col z-[100] hidden md:flex'>
         <ChatSidebar messages={messages} setMessages={setMessages} onSystemUpdate={(u) => setSystemState(prev => ({...prev, ...u}))} isLoading={isLoading} setIsLoading={setIsLoading} isCollapsed={!isSidebarOpen} />
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0 h-full relative border-l border-[var(--border-color)]">
-        <header className="h-16 border-b-[0.5px] border-[var(--border-color)] bg-[var(--surface-primary)] flex items-center justify-between px-6 shrink-0 z-50">
-          <div className="flex items-center gap-6">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 hover:bg-white/5 rounded-lg space-y-1.5 z-50">
-              <div className={`hamburger-line ${isMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`}></div>
-              <div className={`hamburger-line ${isMenuOpen ? 'opacity-0' : ''}`}></div>
-              <div className={`hamburger-line ${isMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`}></div>
+      <div className='flex-1 flex flex-col min-w-0 h-full relative border-l border-[var(--border-color)]'>
+        <header className='h-16 border-b-[0.5px] border-[var(--border-color)] bg-[var(--surface-primary)] flex items-center justify-between px-6 shrink-0 z-50'>
+          <div className='flex items-center gap-6'>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className='p-2 hover:bg-white/5 rounded-lg space-y-1.5 z-50'>
+              <div className={hamburger-line }></div>
+              <div className={hamburger-line }></div>
+              <div className={hamburger-line }></div>
             </button>
-            <h1 className="text-xs font-black tracking-[0.4em] italic">Vizual X // <span className="text-[#2AF5FF]">{activePage.toUpperCase()}</span></h1>
+            <h1 className='text-xs font-black tracking-[0.4em] italic'>Vizual X // <span className='text-[#2AF5FF]'>{activePage.toUpperCase()}</span></h1>
           </div>
-          <div className="flex items-center gap-4">
-            <nav className="hidden md:flex items-center gap-1 bg-black/60 p-1 rounded-xl border-[0.5px] border-white/20">
+          <div className='flex items-center gap-4'>
+            <nav className='hidden md:flex items-center gap-1 bg-black/60 p-1 rounded-xl border-[0.5px] border-white/20'>
               {navItems.map(item => (
-                <button key={item.id} onClick={() => setActivePage(item.id as any)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activePage === item.id ? 'bg-[#1E90FF] text-white shadow-glow' : 'text-[var(--text-muted)] hover:text-white'}`}>{item.label}</button>
+                <button key={item.id} onClick={() => setActivePage(item.id as any)} className={px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all }>{item.label}</button>
               ))}
             </nav>
             <UserAccountDropdown user={currentUser} onLogout={handleLogout} />
@@ -136,11 +130,11 @@ const App: React.FC = () => {
           onLogout={handleLogout}
         />
 
-        <main className="flex-1 overflow-hidden p-0 md:p-6 bg-[var(--bg-absolute)]">
-           <div className="h-full w-full md:monaco-frame overflow-hidden relative md:shadow-4xl">
+        <main className='flex-1 overflow-hidden p-0 md:p-6 bg-[var(--bg-absolute)]'>
+           <div className='h-full w-full md:monaco-frame overflow-hidden relative md:shadow-4xl'>
               {activePage === 'dashboard' && <AdminDashboard load={12} />}
               {activePage === 'chat' && <MultiAgentNexus agents={agents} setAgents={setAgents} />}
-              {activePage === 'creator' && <AutonomousPartnerModules activeModule="creator" />}
+              {activePage === 'creator' && <AutonomousPartnerModules activeModule='creator' />}
               {activePage === 'infra' && <InfrastructurePanel />}
               {activePage === 'editor' && <EditorSuite config={systemState} onUpdate={(u) => setSystemState(prev => ({...prev, ...u}))} />}
               {activePage === 'validation' && <ValidationHub />}
