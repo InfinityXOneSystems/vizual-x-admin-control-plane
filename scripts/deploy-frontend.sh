@@ -30,12 +30,12 @@ fi
 
 # Set the project
 echo "📦 Setting GCP project to: ${PROJECT_ID}"
-gcloud config set project ${PROJECT_ID}
+gcloud config set project "${PROJECT_ID}"
 
 # Build the Docker image using Cloud Build
 echo "🔨 Building Docker image..."
 gcloud builds submit \
-    --tag ${IMAGE_NAME} \
+    --tag "${IMAGE_NAME}" \
     --timeout=20m \
     --machine-type=n1-highcpu-8 \
     -f Dockerfile.frontend \
@@ -50,10 +50,10 @@ echo "✅ Docker image built successfully: ${IMAGE_NAME}"
 
 # Deploy to Cloud Run
 echo "🚢 Deploying to Cloud Run..."
-gcloud run deploy ${SERVICE_NAME} \
-    --image ${IMAGE_NAME} \
+gcloud run deploy "${SERVICE_NAME}" \
+    --image "${IMAGE_NAME}" \
     --platform managed \
-    --region ${REGION} \
+    --region "${REGION}" \
     --allow-unauthenticated \
     --port 8080 \
     --memory 512Mi \
@@ -70,9 +70,9 @@ fi
 echo "✅ Deployment successful!"
 
 # Get the service URL
-SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
+SERVICE_URL=$(gcloud run services describe "${SERVICE_NAME}" \
     --platform managed \
-    --region ${REGION} \
+    --region "${REGION}" \
     --format 'value(status.url)')
 
 echo "=================================================="
