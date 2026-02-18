@@ -8,7 +8,6 @@ import authRouter from './auth';
 import promoRouter from './promo';
 import billingRouter from './billing';
 import connectionsRouter from './connections';
-import syncRouter from '../routes/sync';
 
 const router = Router();
 
@@ -20,7 +19,6 @@ router.use('/validation', validationRouter);
 router.use('/promos', promoRouter);
 router.use('/billing', billingRouter);
 router.use('/connections', connectionsRouter);
-router.use('/sync', syncRouter);
 
 router.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
