@@ -1,23 +1,40 @@
-
 {
-  "name": "vix-monorepo",
-  "version": "1.0.0",
+  "name": "vizual-x-admin-control-plane",
   "private": true,
-  "workspaces": [
-    "backend"
-  ],
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "test:frontend": "vitest run --root . --config ./tests/vitest.config.ts",
-    "test:e2e": "playwright test --config=./tests/playwright.config.ts",
-    "test": "npm run test:frontend && npm run test:e2e"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.41.0",
+    "@monaco-editor/react": "^4.6.0",
+    "axios": "^1.6.7",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.6.0",
+    "framer-motion": "^11.18.2",
+    "lucide-react": "^0.344.0",
+    "monaco-editor": "^0.55.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.22.3",
+    "recharts": "^2.15.4",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^2.6.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.45.1",
-    "@testing-library/react": "^16.0.0",
-    "@types/react": "^18.3.3",
-    "@vitejs/plugin-react": "^4.3.1",
-    "jsdom": "^24.1.0",
-    "typescript": "^5.5.3",
-    "vitest": "^2.0.2"
+    "@types/node": "^25.2.3",
+    "@types/react": "^18.2.64",
+    "@types/react-dom": "^18.2.21",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.1.6"
   }
 }

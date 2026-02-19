@@ -1,0 +1,8 @@
+{
+  "name": "Vizual-X Monaco Chat",
+  "description": "A high-performance, IDE-styled chat interface with Monaco aesthetics, silver gradient accents, and seamless Gemini integration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
